@@ -5,15 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
-use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ExportUser;
-use App\Exports\ExportUserParams;
-use App\Imports\ImportUser;
-use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class UserController extends Controller
 {
@@ -32,7 +27,6 @@ class UserController extends Controller
                 ->paginationQuery();
 
             $users->transform(function ($user) {
-                $user->shop_id = $user->shop_id ? Shop::find($user->shop_id)->name : "Unknown";
                 $user->role_names = $user->roles->isNotEmpty() ? $user->roles[0]->name : null;
                 $user->created_by = $user->created_by ? User::find($user->created_by)->name : "Unknown";
                 $user->updated_by = $user->updated_by ? User::find($user->updated_by)->name : "Unknown";
@@ -57,12 +51,6 @@ class UserController extends Controller
         DB::beginTransaction();
 
         $payload = collect($request->validated());
-       
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('public/images');
-            $image_url = Storage::url($path);
-            $payload['image'] = $image_url;
-        }
        
         try {
 

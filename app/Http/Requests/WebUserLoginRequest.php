@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\REGXEnum;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\GeneralStatusEnum;
-use App\Helpers\Enum;
 
-class UserStoreRequest extends FormRequest
+class WebUserLoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,14 +22,12 @@ class UserStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        $enum = implode(',', (new Enum(GeneralStatusEnum::class))->values());
+        $mobileRule = REGXEnum::MOBILE_NUMBER->value;
 
         return [
-            'name' => 'required|string| unique:users,name| max:24 | min:4',
-            'email' => 'required| email| unique:users,email|string',
-            'phone' => 'nullable|unique:users,phone|min:9|max:13',
-            'password' => 'required| max:24 | min:6',
-            'status' => "required|in:$enum"
+            'email' => ['required_without:phone', 'email'],
+            'phone' => ['required_without:email', 'string', "regex:$mobileRule"],
+            'password' => 'required | string',
         ];
     }
 }

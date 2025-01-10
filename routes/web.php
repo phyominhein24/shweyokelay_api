@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ShopController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -17,5 +15,3 @@ use App\Http\Controllers\ShopController;
 Route::get('/', function () {
     return "Work";
 });
-
-Route::get('/invoice', [ShopController::class, 'exportpdf']);

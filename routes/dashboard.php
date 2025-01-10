@@ -12,8 +12,8 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\VehiclesTypeController;
-use App\Http\Controllers\WebAuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\WebAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
 Route::post('/forget-password', [PasswordResetController::class, 'forgetPassword'])->middleware('guest');
 Route::get('/reset-password', [PasswordResetController::class, 'resetPasswordPage'])->middleware('guest');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('guest');
@@ -35,14 +36,12 @@ Route::get('/route', [RoutesController::class, 'index']);
 Route::get('/vehiclesTypes', [VehiclesTypeController::class, 'index']);
 
 Route::group(['prefix' => 'auth'], function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/loginn', [WebAuthController::class, 'login']);
-    Route::post('/register', [MemberController::class, 'store']);
+    Route::post('/login', [WebAuthController::class, 'login']);
 });
 
 Route::middleware('jwt')->group(function () {
 
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [WebAuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/profile', [AuthController::class, 'userProfile']);

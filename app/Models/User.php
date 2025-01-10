@@ -21,9 +21,6 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'phone',
         'password',
-        'address',
-        'shop_id',
-        'image',
         'status'
     ];
 
@@ -70,8 +67,4 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function shop(): BelongsTo
-    {
-        return $this->belongsTo(Shop::class, 'shop_id');
-    }
 }

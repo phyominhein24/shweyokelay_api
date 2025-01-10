@@ -38,21 +38,22 @@ class RoutesUpdateRequest extends FormRequest
         return [
             'name' => "required|string| unique:routes,name,$routesId| max:24 | min:1",
 
-            'distance' => 'string| nullable| max:1000',
-            'duration' => 'string| nullable| max:1000',
+            'distance' => 'string| nullable',
+            'duration' => 'string| nullable',
 
-            'is_ac' => 'boolean| nullable',
+            'is_ac' => 'boolean| required',
             'day_off' => 'nullable| json',
             'start_date' => 'timestamp| nullable',
-            'price' => 'string| nullable| max:1000',
-            'departure' => 'timestamp',
-            'arrivals' => 'timestamp',
+            'price' => 'string| nullable',
+            'departure' => 'string| required',
+            'arrivals' => 'string| required',
 
             'starting_point' => "required|in:$counters",
             'ending_point' => "required|in:$counters|different:starting_point",
         
-            'vehicles_type' => "required|in:$vehicles",
+            'vehicles_type_id' => "required|in:$vehicles",
             'status' => "required|in:$enum"
         ];
+
     }
 }

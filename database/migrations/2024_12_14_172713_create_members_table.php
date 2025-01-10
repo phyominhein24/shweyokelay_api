@@ -13,14 +13,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('members', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('is_agent')->default(false);
-            $table->string('per')->nullable();
+            $table->string('commission')->nullable();
             $table->rememberToken();
             $table->string('status')->default(GeneralStatusEnum::ACTIVE->value);
             $table->auditColumns();

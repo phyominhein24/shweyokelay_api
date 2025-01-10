@@ -32,8 +32,8 @@ class MemberUpdateRequest extends FormRequest
             'name' => "required|string| unique:members,name,$memberId| max:24 | min:4",
             'email' => "required| email| unique:members,email,$memberId|string",
             'phone' => "nullable|unique:members,phone,$memberId|min:9|max:13",
-            'agent' => 'boolean| nullable| max:100',            
-            'per' => "required|string",
+            'is_agent' => 'nullable|boolean',            
+            'commission' => 'nullable|string|not_in:""',
             'status' => "required|in:$enum"
         ];
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RoutesStoreRequest;
 use App\Http\Requests\RoutesUpdateRequest;
+use App\Models\Counter;
 use App\Models\Routes;
 use App\Models\User;
 use App\Models\VehiclesType;
@@ -16,15 +17,28 @@ class RoutesController extends Controller
     {
         DB::beginTransaction();
         try {
-            $routess = Routes::sortingQuery()
+
+            $isSpecial = $request->input('is_spicial');
+
+            $routess = Routes::query();
+
+            if ($isSpecial !== null) {
+                $routess->whereNotNull('start_date');
+            }
+
+            $routess = Routes::with([
+                'vehicles_type'
+            ])
+                ->sortingQuery()
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
                 ->paginationQuery();
+            DB::commit();
 
             $routess->transform(function ($routes) {
-                $routes->starting_point = $routes->starting_point ? Routes::find($routes->starting_point)->name : "Unknown";
-                $routes->ending_point = $routes->ending_point ? Routes::find($routes->ending_point)->name : "Unknown";
+                $routes->starting_point = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
+                $routes->ending_point = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
 
                 $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";

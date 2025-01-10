@@ -26,7 +26,7 @@ class CounterStoreRequest extends FormRequest
         $enum = implode(',', (new Enum(GeneralStatusEnum::class))->values());
 
         return [
-            'name' => 'required|string| unique:counter,name| max:24 | min:1',
+            'name' => 'required|string| unique:counters,name| max:24 | min:1',
             'phone' => 'nullable|min:9|max:13',
             'city' => 'string| nullable| max:1000',
             'terminal' => 'string| nullable| max:1000',

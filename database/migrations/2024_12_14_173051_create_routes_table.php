@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('routes', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->unsignedBigInteger('vehicles_type_id');
             $table->unsignedBigInteger('starting_point');

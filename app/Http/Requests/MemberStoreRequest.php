@@ -30,9 +30,9 @@ class MemberStoreRequest extends FormRequest
             'email' => 'required| email| unique:members,email|string',
             'phone' => 'nullable|unique:members,phone|min:9|max:13',
             'password' => 'required| max:24 | min:6',
-            'agent' => 'boolean| nullable| max:1000',
-            'per' => 'required|string',
-            'status' => "required|in:$enum"
+            'is_agent' => 'boolean| nullable',
+            'commission' => 'string|not_in:""',
+            'status' => "nullable|in:$enum"
         ];
     }
 }

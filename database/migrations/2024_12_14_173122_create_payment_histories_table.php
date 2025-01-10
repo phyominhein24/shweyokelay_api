@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payment_histories', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->unsignedBigInteger('member_id');
             $table->unsignedBigInteger('route_id');
             $table->string('phone');

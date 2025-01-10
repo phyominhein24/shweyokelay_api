@@ -15,12 +15,20 @@ class MemberController extends Controller
     {
         DB::beginTransaction();
         try {
-            $members = Member::sortingQuery()
+            $isAgent = $request->input('is_agent');
+
+            $members = Member::query();
+
+            if ($isAgent !== null) {
+                $members->where('is_agent', (bool) $isAgent);
+            }
+    
+            $members = $members->sortingQuery()
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
                 ->paginationQuery();
-
+    
             $members->transform(function ($member) {
                 $member->created_by = $member->created_by ? User::find($member->created_by)->name : "Unknown";
                 $member->updated_by = $member->updated_by ? User::find($member->updated_by)->name : "Unknown";
@@ -38,16 +46,24 @@ class MemberController extends Controller
     public function store(MemberStoreRequest $request)
     {
         DB::beginTransaction();
-        $payload = collect($request->validated());
         try {
+            $payload = collect($request->validated());
+
+            if ($payload->has('password')) {
+                $payload['password'] = bcrypt($payload['password']);
+            }
+
             $member = Member::create($payload->toArray());
+
             DB::commit();
-            return $this->success('member created successfully', $member);
+
+            return $this->success('Member created successfully', $member);
         } catch (Exception $e) {
-            DB::rollback();
+            DB::rollBack();
             return $this->internalServerError();
         }
     }
+
 
     public function show($id)
     {

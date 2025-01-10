@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vehicles_types', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->string('seat_layout');
             $table->integer('total_seat');

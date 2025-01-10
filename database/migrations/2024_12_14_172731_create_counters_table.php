@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('counters', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->string('phone')->unique()->nullable();
             $table->string('city');
