@@ -24,8 +24,8 @@ return new class extends Migration
             $table->json('day_off')->nullable();
             $table->timestamp('start_date')->nullable();
             $table->string('price');
-            $table->timestamp('departure');
-            $table->timestamp('arrivals');
+            $table->timestamp('departure')->nullable();;
+            $table->timestamp('arrivals')->nullable();;
             $table->string('status')->default(GeneralStatusEnum::ACTIVE->value);
             $table->auditColumns();
 
