@@ -27,7 +27,7 @@ class MemberStoreRequest extends FormRequest
 
         return [
             'name' => 'required|string| unique:members,name| max:24 | min:1',
-            'email' => 'required| email| unique:members,email|string',
+            'email' => 'required| email| unique:members,email|unique:users,email|string',
             'phone' => 'nullable|unique:members,phone|min:9|max:13',
             'password' => 'required| max:24 | min:6',
             'is_agent' => 'boolean| nullable',

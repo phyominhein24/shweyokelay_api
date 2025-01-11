@@ -27,7 +27,7 @@ class UserStoreRequest extends FormRequest
 
         return [
             'name' => 'required|string| unique:users,name| max:24 | min:4',
-            'email' => 'required| email| unique:users,email|string',
+            'email' => 'required| email| unique:users,email|unique:members,email|string',
             'phone' => 'nullable|unique:users,phone|min:9|max:13',
             'password' => 'required| max:24 | min:6',
             'status' => "required|in:$enum"

@@ -25,9 +25,8 @@ class WebUserLoginRequest extends FormRequest
         $mobileRule = REGXEnum::MOBILE_NUMBER->value;
 
         return [
-            'email' => ['required_without:phone', 'email'],
-            'phone' => ['required_without:email', 'string', "regex:$mobileRule"],
-            'password' => 'required | string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
         ];
     }
 }

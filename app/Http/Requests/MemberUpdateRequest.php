@@ -30,7 +30,7 @@ class MemberUpdateRequest extends FormRequest
 
         return [
             'name' => "required|string| unique:members,name,$memberId| max:24 | min:4",
-            'email' => "required| email| unique:members,email,$memberId|string",
+            'email' => "required| email|unique:users,email|unique:members,email,$memberId|string",
             'phone' => "nullable|unique:members,phone,$memberId|min:9|max:13",
             'is_agent' => 'nullable|boolean',            
             'commission' => 'nullable|string|not_in:""',

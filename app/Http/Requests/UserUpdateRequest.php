@@ -31,7 +31,7 @@ class UserUpdateRequest extends FormRequest
 
         return [
             'name' => "required|string| unique:users,name,$userId| max:24 | min:4",
-            'email' => "required| email| unique:users,email,$userId|string",
+            'email' => "required| email|email,unique:members,email| unique:users,$userId|string",
             'phone' => "nullable|unique:users,phone,$userId|min:9|max:13",
             'status' => "required|in:$enum"
         ];

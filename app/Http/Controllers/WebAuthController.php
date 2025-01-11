@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GeneralStatusEnum;
 use App\Http\Requests\WebUserLoginRequest;
 use App\Models\Member;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class WebAuthController extends Controller
@@ -21,49 +22,55 @@ class WebAuthController extends Controller
          $payload = collect($request->validated());
      
          try {
-            $user = Member::where('email', $payload->get('email'))->first();
-        
-            if (!$user) {
-                return response()->json(['message' => 'Account does not exist'], 404);
-            }
-        
-            if ($user->status !== GeneralStatusEnum::ACTIVE->value) {
-                return response()->json(['message' => 'Account is not ACTIVE'], 403);
-            }
-        
-            if (!\Hash::check($payload->get('password'), $user->password)) {
-                return response()->json(['message' => 'Invalid email or password'], 401);
-            }
-        
-            // Attempt to generate the token
-            $token = auth()->guard('member')->login($user);
-        
-            if (!$token) {
-                \Log::error("JWT Token generation failed for user ID: {$user->id}");
-                return response()->json(['message' => 'Unable to generate token'], 500);
-            }
-    
-
-            $responseData = [
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'is_agent' => $user->is_agent,
-                    'phone' => $user->phone,                
-                    'status' => $user->status,                            
-                ]
-            ];
-    
-            return $this->success('Login Successfully', $responseData);
-
-        } catch (Exception $e) {
-            \Log::error("Login error: " . $e->getMessage());
-            return response()->json(['message' => 'An error occurred'], 500);
-        }
-        
+             // Check for user in both Member and Admin tables
+             $user = Member::where('email', $payload->get('email'))->first() 
+                     ?? User::where('email', $payload->get('email'))->first();
+     
+             if (!$user) {
+                 return response()->json(['message' => 'Invalid email or password'], 404);
+             }
+     
+             if ($user->status !== GeneralStatusEnum::ACTIVE->value) {
+                 return response()->json(['message' => 'Account is not ACTIVE'], 403);
+             }
+     
+             if (!\Hash::check($payload->get('password'), $user->password)) {
+                 return response()->json(['message' => 'Invalid email or password'], 401);
+             }
+     
+             // Determine guard based on user type
+             $guard = $user instanceof Member ? 'member' : 'api';
+     
+             // Attempt to generate the token
+             $token = auth()->guard($guard)->login($user);
+     
+             if (!$token) {
+                 \Log::error("JWT Token generation failed for user ID: {$user->id}");
+                 return response()->json(['message' => 'Unable to generate token'], 500);
+             }
+     
+             $responseData = [
+                 'token' => $token,
+                 'user' => [
+                     'id' => $user->id,
+                     'name' => $user->name,
+                     'email' => $user->email,
+                     'phone' => $user->phone,
+                     'status' => $user->status,
+                     'is_admin' => $user instanceof User,
+                     'is_agent' => $user->is_agent
+                 ],
+             ];
+             
+     
+             return $this->success('Login Successfully', $responseData);
+     
+         } catch (Exception $e) {
+             \Log::error("Login error: " . $e->getMessage());
+             return response()->json(['message' => 'An error occurred'], 500);
+         }
      }
+     
      
      
      

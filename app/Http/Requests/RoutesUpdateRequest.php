@@ -45,8 +45,8 @@ class RoutesUpdateRequest extends FormRequest
             'day_off' => 'nullable| json',
             'start_date' => 'timestamp| nullable',
             'price' => 'string| nullable',
-            'departure' => 'string| required',
-            'arrivals' => 'string| required',
+            'departure' => 'timestamp| required',
+            'arrivals' => 'timestamp| required',
 
             'starting_point' => "required|in:$counters",
             'ending_point' => "required|in:$counters|different:starting_point",

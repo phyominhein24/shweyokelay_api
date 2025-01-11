@@ -30,7 +30,9 @@ class Routes extends Model
 
     protected $casts = [
         'created_at' => 'datetime: Y-m-d H:i:s',
-        'updated_at' => 'datetime: Y-m-d H:i:s'
+        'updated_at' => 'datetime: Y-m-d H:i:s',
+        'departure' => 'datetime: H:i:s',
+        'arrivals' => 'datetime: H:i:s'
     ];
 
     protected static function boot()
