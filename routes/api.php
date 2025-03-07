@@ -49,6 +49,11 @@ Route::middleware('jwt')->group(function () {
     Route::post('/change-password/{id}', [AuthController::class, 'changePassword']);
 
     Route::group(['prefix' => 'role'], function () {
+        // Route::get('/', [RoleController::class, 'index']);
+        // Route::post('/', [RoleController::class, 'store']);
+        // Route::get('/{id}', [RoleController::class, 'show']);
+        // Route::post('/{id}', [RoleController::class, 'update']);
+        // Route::delete('/{id}', [RoleController::class, 'destroy']);
         Route::get('/', [RoleController::class, 'index'])->permission(PermissionEnum::ROLE_INDEX->value);
         Route::post('/', [RoleController::class, 'store'])->permission(PermissionEnum::ROLE_STORE->value);
         Route::get('/{id}', [RoleController::class, 'show'])->permission(PermissionEnum::ROLE_SHOW->value);
@@ -57,11 +62,12 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::group(['prefix' => 'permission'], function () {
+        // Route::get('/', [PermissionController::class, 'index']);
+        // Route::get('/{id}', [PermissionController::class, 'show']);
         Route::get('/', [PermissionController::class, 'index'])->permission(PermissionEnum::PERMISSION_INDEX->value);
         Route::get('/{id}', [PermissionController::class, 'show'])->permission(PermissionEnum::PERMISSION_SHOW->value);
-
     });
-    
+
     Route::group(['prefix' => 'user'], function () {
         Route::post('/assign-role', [UserController::class, 'assignRole'])->permission(PermissionEnum::USER_STORE->value);
         Route::post('/remove-role', [UserController::class, 'removeRole'])->permission(PermissionEnum::USER_UPDATE->value);
@@ -77,7 +83,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [MemberController::class, 'store'])->permission(PermissionEnum::MEMBER_STORE->value);
         Route::get('/{id}', [MemberController::class, 'show'])->permission(PermissionEnum::MEMBER_SHOW->value);
         Route::post('/{id}', [MemberController::class, 'update'])->permission(PermissionEnum::MEMBER_UPDATE->value);
-        Route::delete('/{id}', [MemberController::class, 'destroy'])->permission(PermissionEnum::MEMBER_DESTROY->value);        
+        Route::delete('/{id}', [MemberController::class, 'destroy'])->permission(PermissionEnum::MEMBER_DESTROY->value);
     });
 
     Route::group(['prefix' => 'counter'], function () {
@@ -85,7 +91,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [CounterController::class, 'store'])->permission(PermissionEnum::COUNTER_STORE->value);
         Route::get('/{id}', [CounterController::class, 'show'])->permission(PermissionEnum::COUNTER_SHOW->value);
         Route::post('/{id}', [CounterController::class, 'update'])->permission(PermissionEnum::COUNTER_UPDATE->value);
-        Route::delete('/{id}', [CounterController::class, 'destroy'])->permission(PermissionEnum::COUNTER_DESTROY->value);        
+        Route::delete('/{id}', [CounterController::class, 'destroy'])->permission(PermissionEnum::COUNTER_DESTROY->value);
     });
 
     Route::group(['prefix' => 'vehiclesType'], function () {
@@ -93,7 +99,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [VehiclesTypeController::class, 'store'])->permission(PermissionEnum::VEHICLES_TYPE_STORE->value);
         Route::get('/{id}', [VehiclesTypeController::class, 'show'])->permission(PermissionEnum::VEHICLES_TYPE_SHOW->value);
         Route::post('/{id}', [VehiclesTypeController::class, 'update'])->permission(PermissionEnum::VEHICLES_TYPE_UPDATE->value);
-        Route::delete('/{id}', [VehiclesTypeController::class, 'destroy'])->permission(PermissionEnum::VEHICLES_TYPE_DESTROY->value);        
+        Route::delete('/{id}', [VehiclesTypeController::class, 'destroy'])->permission(PermissionEnum::VEHICLES_TYPE_DESTROY->value);
     });
 
     Route::group(['prefix' => 'routes'], function () {
@@ -101,7 +107,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [RoutesController::class, 'store'])->permission(PermissionEnum::ROUTES_STORE->value);
         Route::get('/{id}', [RoutesController::class, 'show'])->permission(PermissionEnum::ROUTES_SHOW->value);
         Route::post('/{id}', [RoutesController::class, 'update'])->permission(PermissionEnum::ROUTES_UPDATE->value);
-        Route::delete('/{id}', [RoutesController::class, 'destroy'])->permission(PermissionEnum::ROUTES_DESTROY->value);        
+        Route::delete('/{id}', [RoutesController::class, 'destroy'])->permission(PermissionEnum::ROUTES_DESTROY->value);
     });
 
     Route::group(['prefix' => 'paymentHistory'], function () {
@@ -109,7 +115,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [PaymentHistoryController::class, 'store'])->permission(PermissionEnum::PAYMENT_HISTORY_STORE->value);
         Route::get('/{id}', [PaymentHistoryController::class, 'show'])->permission(PermissionEnum::PAYMENT_HISTORY_SHOW->value);
         Route::post('/{id}', [PaymentHistoryController::class, 'update'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
-        Route::delete('/{id}', [PaymentHistoryController::class, 'destroy'])->permission(PermissionEnum::PAYMENT_HISTORY_DESTROY->value);        
+        Route::delete('/{id}', [PaymentHistoryController::class, 'destroy'])->permission(PermissionEnum::PAYMENT_HISTORY_DESTROY->value);
     });
 
     Route::group(['prefix' => 'dashboard'], function () {
