@@ -38,7 +38,7 @@ class PaymentHistoryStoreRequest extends FormRequest
             'total' => 'numeric| max:1000',
             'note' => 'string| nullable| max:1000',
             'start_time' => 'timestamp| nullable',
-            'member' => "required|in:$members",
+            'member' => "nullable|in:$members",
             'route' => "required|in:$routes",
             'status' => "required|in:$enum"
         ];

@@ -33,9 +33,12 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 Route::get('/counters', [CounterController::class, 'index']);
 Route::get('/route', [RoutesController::class, 'index']);
 Route::get('/vehiclesTypes', [VehiclesTypeController::class, 'index']);
+Route::get('/profiles', [WebAuthController::class, 'userProfile']);
+Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/loginnn', [WebAuthController::class, 'userProfile']);
     Route::post('/loginn', [WebAuthController::class, 'login']);
     Route::post('/register', [MemberController::class, 'store']);
 });
