@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\GeneralStatusEnum;
+use App\Enums\OrderStatusEnum;
 use App\Helpers\Enum;
 use App\Models\Member;
+use App\Models\Payment;
 use App\Models\Routes;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,20 +28,24 @@ class PaymentHistoryStoreRequest extends FormRequest
     {
         $members = Member::all()->pluck('id')->toArray();
         $members = implode(',', $members);
+        $payments = Payment::all()->pluck('id')->toArray();
+        $payments = implode(',', $payments);
         $routes = Routes::all()->pluck('id')->toArray();
         $routes = implode(',', $routes);
-        $enum = implode(',', (new Enum(GeneralStatusEnum::class))->values());
+        $enum = implode(',', (new Enum(OrderStatusEnum::class))->values());
 
         return [
-            'phone' => 'min:9|max:13',
+            'phone' => 'min:1|max:13',
             'nrc' => 'string| max:1000',
             'seat' => 'nullable| json',
-            'total' => 'numeric| max:1000',
-            'note' => 'string| nullable| max:1000',
-            'start_time' => 'timestamp| nullable',
-            'member' => "nullable|in:$members",
-            'route' => "required|in:$routes",
-            'status' => "required|in:$enum"
+            'total' => 'numeric',
+            'note' => 'string| nullable',
+            'start_time' => 'nullable',
+            'member_id' => "nullable|in:$members",
+            'route_id' => "required|in:$routes",
+            'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'payment_id' => "nullable|in:$payments",
+            'status' => "in:$enum"
         ];
     }
 }

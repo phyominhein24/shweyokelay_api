@@ -13,6 +13,8 @@ use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\VehiclesTypeController;
 use App\Http\Controllers\WebAuthController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\DailyRouteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,10 +33,12 @@ Route::get('/reset-password', [PasswordResetController::class, 'resetPasswordPag
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('guest');
 
 Route::get('/counters', [CounterController::class, 'index']);
-Route::get('/route', [RoutesController::class, 'index']);
+Route::get('/route', [RoutesController::class, 'index_for_web']);
 Route::get('/vehiclesTypes', [VehiclesTypeController::class, 'index']);
 Route::get('/profiles', [WebAuthController::class, 'userProfile']);
+Route::get('/memberProfile/{id}', [DashboardController::class, 'memberProfile']);
 Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
+Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -99,6 +103,14 @@ Route::middleware('jwt')->group(function () {
         Route::delete('/{id}', [VehiclesTypeController::class, 'destroy'])->permission(PermissionEnum::VEHICLES_TYPE_DESTROY->value);        
     });
 
+    Route::group(['prefix' => 'payment'], function () {
+        Route::get('/', [PaymentController::class, 'index']);
+        Route::post('/', [PaymentController::class, 'store']);
+        Route::get('/{id}', [PaymentController::class, 'show'])->permission(PermissionEnum::PAYMENT_SHOW->value);
+        Route::post('/{id}', [PaymentController::class, 'update'])->permission(PermissionEnum::PAYMENT_UPDATE->value);
+        Route::delete('/{id}', [PaymentController::class, 'destroy'])->permission(PermissionEnum::PAYMENT_DESTROY->value);        
+    });
+
     Route::group(['prefix' => 'routes'], function () {
         Route::get('/', [RoutesController::class, 'index'])->permission(PermissionEnum::ROUTES_INDEX->value);
         Route::post('/', [RoutesController::class, 'store'])->permission(PermissionEnum::ROUTES_STORE->value);
@@ -113,6 +125,14 @@ Route::middleware('jwt')->group(function () {
         Route::get('/{id}', [PaymentHistoryController::class, 'show'])->permission(PermissionEnum::PAYMENT_HISTORY_SHOW->value);
         Route::post('/{id}', [PaymentHistoryController::class, 'update'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
         Route::delete('/{id}', [PaymentHistoryController::class, 'destroy'])->permission(PermissionEnum::PAYMENT_HISTORY_DESTROY->value);        
+    });
+
+    Route::group(['prefix' => 'dailyRoute'], function () {
+        Route::get('/', [DailyRouteController::class, 'index']);
+        Route::post('/', [DailyRouteController::class, 'store'])->permission(PermissionEnum::DAILY_ROUTE_STORE->value);
+        Route::get('/{id}', [DailyRouteController::class, 'show']);
+        Route::post('/{id}', [DailyRouteController::class, 'update'])->permission(PermissionEnum::DAILY_ROUTE_UPDATE->value);
+        Route::delete('/{id}', [DailyRouteController::class, 'destroy'])->permission(PermissionEnum::DAILY_ROUTE_DESTROY->value);        
     });
 
     Route::group(['prefix' => 'dashboard'], function () {

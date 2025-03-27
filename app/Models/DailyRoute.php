@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DailyRoute extends Model
 {
-    use HasFactory, SoftDelete;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'route_id',
