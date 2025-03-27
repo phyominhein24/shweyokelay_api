@@ -4,38 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
-class Routes extends Model
+class Payment extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
-        'vehicles_type_id',
-        'starting_point',
-        'ending_point',
-        'distance',
-        'duration',
-        'is_ac',
-        'day_off',
-        'start_date',
-        'price',
-        'fprice',
-        'last_min',
-        'cancle_booking',
-        'departure',
-        'arrivals',
-        'status',
+        'photo',
+        'acc_name',
+        'acc_number',
+        'acc_qr'
     ];
 
     protected $casts = [
         'created_at' => 'datetime: Y-m-d H:i:s',
-        'updated_at' => 'datetime: Y-m-d H:i:s',
-        'departure' => 'datetime: H:i',
-        'arrivals' => 'datetime: H:i'
+        'updated_at' => 'datetime: Y-m-d H:i:s'
     ];
 
     protected static function boot()
@@ -58,15 +45,4 @@ class Routes extends Model
             }
         });
     }
-
-    public function vehicles_type(): BelongsTo
-    {
-        return $this->belongsTo(VehiclesType::class, 'vehicles_type_id');
-    }
-
-    public function counter(): BelongsTo
-    {
-        return $this->belongsTo(Counter::class, 'starting_point', 'ending_point');
-    }
-
 }

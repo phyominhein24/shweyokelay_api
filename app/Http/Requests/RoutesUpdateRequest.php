@@ -45,6 +45,9 @@ class RoutesUpdateRequest extends FormRequest
             'day_off' => 'nullable| json',
             'start_date' => 'timestamp| nullable',
             'price' => 'string| nullable',
+            'fprice' => 'string| required',
+            'last_min' => 'string| required',
+            'cancle_booking' => 'string| required',
             'departure' => 'timestamp| required',
             'arrivals' => 'timestamp| required',
 

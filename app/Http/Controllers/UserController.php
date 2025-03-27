@@ -8,10 +8,98 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+
+    public function getUserInfo(Request $request)
+    {
+        // Validate incoming request
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        $token = $request->input('token');
+
+        // API Credentials
+        $appid = "kpe474a3a5101c7edb1bf8b84ffadb1b";
+        $appkey = '#N$w#%#Goen)qrH8zYM#MARqVtLEsqRc';
+        $merch_code = "911004501";
+        $version = "1.0";
+        $method = "kbz.payment.queryCustInfo";
+        $timestamp = time(); // Unix timestamp
+        $nonce_str = Str::uuid()->toString();  // Generate a random UUID
+
+        // Create string to sign
+        $usertoken = "access_token=" . $token
+            . "&appid=" . $appid
+            . "&merch_code=" . $merch_code
+            . "&method=" . $method
+            . "&nonce_str=" . $nonce_str
+            . "&resource_type=" . "OPENID"
+            . "&timestamp=" . $timestamp
+            . "&trade_type=" . "MINIAPP"
+            . "&version=" . $version;
+
+        $stringSignuser = $usertoken . "&key=" . $appkey;
+
+        // Create SHA256 signature
+        $signtoken = strtoupper(hash('sha256', $stringSignuser));
+
+        // API Request Body
+        $userRequest = [
+            'data' => [
+                'Request' => [
+                    'method' => $method,
+                    'timestamp' => $timestamp,
+                    'nonce_str' => $nonce_str,
+                    'version' => $version,
+                    'biz_content' => [
+                        'merch_code' => $merch_code,
+                        'appid' => $appid,
+                        'access_token' => $token,
+                        'trade_type' => 'MINIAPP',
+                        'resource_type' => 'OPENID',
+                    ],
+                    'sign' => $signtoken,
+                    'sign_type' => 'SHA256',
+                ]
+            ]
+        ];
+
+        // Make the HTTP request to the external API
+        $response = Http::withOptions([
+            'verify' => false, // Disable SSL verification
+        ])->post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', [
+            'data' => [
+                "Request" => [
+                    "method" => "kbz.payment.queryCustInfo",
+                    "timestamp" => time(),
+                    "nonce_str" => uniqid(),
+                    "version" => "1.0",
+                    "biz_content" => [
+                        "merch_code" => "your_merch_code",
+                        "appid" => "your_appid",
+                        "access_token" => "your_access_token",
+                        "trade_type" => "MINIAPP",
+                        "resource_type" => "OPENID"
+                    ]
+                ]
+            ]
+        ]);
+
+        // Check if the response is valid and handle accordingly
+        if ($response->successful()) {
+            $responseData = $response->json();
+            $openid = $responseData['body']['Response']['customer_info']['openID'] ?? 'Unknown';
+            return response()->json(['openid' => $openid]);
+        } else {
+            return response()->json(['error' => 'Failed to fetch user info'], 500);
+        }
+    }
+
     public function index(Request $request)
     {
 

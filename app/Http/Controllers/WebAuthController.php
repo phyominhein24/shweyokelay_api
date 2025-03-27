@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Enums\GeneralStatusEnum;
 use App\Http\Requests\WebUserLoginRequest;
 use App\Models\Member;
+use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class WebAuthController extends Controller
@@ -16,13 +18,40 @@ class WebAuthController extends Controller
      * @bodyParam username required.
      * @bodyParam password required.
      */
+    public function userProfile(Request $request)
+    {
+        $email = $request->input('email');
+
+        $user = Member::where('email', $email)->first() 
+                ?? User::where('email', $email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid email or password'], 404);
+        }
+
+        // $user = auth()->guard('member')->user();
+
+        // DB::beginTransaction();
+        // $role = Role::with(['permissions'])->findOrFail($user->id);
+        // DB::commit();  
+        
+        // $responseData = [
+        //     'user' => [
+        //         'id' => $user->id,
+        //         'name' => $user->name,
+        //         'email' => $user->email,
+        //         'phone' => $user->phone,                
+        //         'status' => $user->status,                            
+        //     ]
+        // ];
+        return $this->success('user profile retrived successfully', $user);
+    }
 
      public function login(WebUserLoginRequest $request)
      {
          $payload = collect($request->validated());
      
          try {
-             // Check for user in both Member and Admin tables
              $user = Member::where('email', $payload->get('email'))->first() 
                      ?? User::where('email', $payload->get('email'))->first();
      
@@ -38,10 +67,8 @@ class WebAuthController extends Controller
                  return response()->json(['message' => 'Invalid email or password'], 401);
              }
      
-             // Determine guard based on user type
              $guard = $user instanceof Member ? 'member' : 'api';
      
-             // Attempt to generate the token
              $token = auth()->guard($guard)->login($user);
      
              if (!$token) {
@@ -71,10 +98,6 @@ class WebAuthController extends Controller
          }
      }
      
-     
-     
-     
-
     /**
      * APIs for user login out
      */
@@ -105,24 +128,6 @@ class WebAuthController extends Controller
     /**
      * APIs for refresh token
      */
-    public function refresh()
-    {
-        DB::beginTransaction();
-        try {
-            $user = auth()->guard('api')->user();
-            DB::commit();
-
-            if ($user) {
-                return $this->createNewToken(auth()->guard('api')->refresh());
-            }
-
-            return response()->json(['message' => 'Invalid token'], 400);
-
-        } catch (Exception $e) {
-            DB::rollback();
-            throw $e;
-        }
-    }
 
     /**
      * Create new token for user login

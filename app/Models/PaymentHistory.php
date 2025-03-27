@@ -15,6 +15,8 @@ class PaymentHistory extends Model
     protected $fillable = [
         'member_id',
         'route_id',
+        'payment_id',
+        'screenshot',
         'phone',
         'nrc',
         'seat',
@@ -25,6 +27,7 @@ class PaymentHistory extends Model
     ];
 
     protected $casts = [
+        'seat' => 'array',
         'created_at' => 'datetime: Y-m-d H:i:s',
         'updated_at' => 'datetime: Y-m-d H:i:s'
     ];
@@ -35,11 +38,13 @@ class PaymentHistory extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            $userId = auth()->check() ? auth()->user()->id : 1;
+        
             if (!$model->isDirty('created_by')) {
-                $model->created_by = auth()->user()->id;
+                $model->created_by = $userId;
             }
             if (!$model->isDirty('updated_by')) {
-                $model->updated_by = auth()->user()->id;
+                $model->updated_by = $userId;
             }
         });
 

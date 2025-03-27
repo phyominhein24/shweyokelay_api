@@ -122,7 +122,7 @@ class AuthController extends Controller
      */
     public function userProfile()
     {
-        $user = auth()->user();
+        $user = auth()->guard('member')->user();
 
         DB::beginTransaction();
         $role = Role::with(['permissions'])->findOrFail($user->id);
@@ -182,4 +182,5 @@ class AuthController extends Controller
             'user' => auth()->user(),
         ]);
     }
+
 }
