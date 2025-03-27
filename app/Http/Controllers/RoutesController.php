@@ -8,8 +8,10 @@ use App\Models\Counter;
 use App\Models\Routes;
 use App\Models\User;
 use App\Models\VehiclesType;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RoutesController extends Controller
 {
@@ -64,6 +66,7 @@ class RoutesController extends Controller
             return $this->success('routes created successfully', $routes);
         } catch (Exception $e) {
             DB::rollback();
+            Log::error($e->getMessage());
             return $this->internalServerError();
         }
     }

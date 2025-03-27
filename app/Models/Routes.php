@@ -66,4 +66,8 @@ class Routes extends Model
         return $this->belongsTo(Counter::class, 'starting_point', 'ending_point');
     }
 
+    public function dailyRoutes()
+    {
+        return $this->hasMany(DailyRoute::class);
+    }
 }
