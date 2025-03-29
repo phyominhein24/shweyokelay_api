@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\GeneralStatusEnum;
+use App\Enums\OrderStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,15 +14,17 @@ return new class extends Migration
     {
         Schema::create('payment_histories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('member_id');
+            $table->unsignedBigInteger('member_id')->nullable();;
             $table->unsignedBigInteger('route_id');
+            $table->unsignedBigInteger('payment_id');
+            $table->string('screenshot');
             $table->string('phone');
             $table->string('nrc');
             $table->json('seat');
             $table->integer('total');
             $table->string('note');
             $table->timestamp('start_time')->nullable();
-            $table->string('status')->default(GeneralStatusEnum::ACTIVE->value);
+            $table->string('status')->default(OrderStatusEnum::PENDING->value);
             $table->auditColumns();
 
             $table->foreign('member_id')
@@ -33,6 +35,11 @@ return new class extends Migration
             $table->foreign('route_id')
                 ->references('id')
                 ->on('routes')
+                ->onDelete('cascade');
+
+            $table->foreign('payment_id')
+                ->references('id')
+                ->on('payments')
                 ->onDelete('cascade');
         });
     }

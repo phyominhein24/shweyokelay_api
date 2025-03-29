@@ -41,6 +41,13 @@ enum PermissionEnum: string
     case COUNTER_UPDATE = 'Counter_Update';
     case COUNTER_DESTROY = 'Counter_Delete';
 
+    /** PAYMENT */
+    case PAYMENT_INDEX = 'Payment_All';
+    case PAYMENT_SHOW = 'Payment_Detail';
+    case PAYMENT_STORE = 'Payment_Create';
+    case PAYMENT_UPDATE = 'Payment_Update';
+    case PAYMENT_DESTROY = 'Payment_Delete';
+
     /** USER */
     case USER_INDEX = 'User_All';
     case USER_SHOW = 'User_Detail';
@@ -54,6 +61,13 @@ enum PermissionEnum: string
     case PAYMENT_HISTORY_STORE = 'Payment_History_Create';
     case PAYMENT_HISTORY_UPDATE = 'Payment_History_Update';
     case PAYMENT_HISTORY_DESTROY = 'Payment_History_Delete';
+
+    /** DAILY_ROUTE */
+    case DAILY_ROUTE_INDEX = 'Daily_Route_All';
+    case DAILY_ROUTE_SHOW = 'Daily_Route_Detail';
+    case DAILY_ROUTE_STORE = 'Daily_Route_Create';
+    case DAILY_ROUTE_UPDATE = 'Daily_Route_Update';
+    case DAILY_ROUTE_DESTROY = 'Daily_Route_Delete';
 
     /** ROUTES */
     case ROUTES_INDEX = 'Routes_All';

@@ -6,6 +6,9 @@ use App\Http\Requests\PaymentHistoryStoreRequest;
 use App\Http\Requests\PaymentHistoryUpdateRequest;
 use App\Models\PaymentHistory;
 use App\Models\User;
+use App\Models\Member;
+use App\Models\Route;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +25,10 @@ class PaymentHistoryController extends Controller
                 ->paginationQuery();
 
             $paymentHistorys->transform(function ($paymentHistory) {
+                $paymentHistory->member_id = $paymentHistory->member_id ? Member::find($paymentHistory->member_id)->name : "Unknown";
+                $paymentHistory->route_id = $paymentHistory->route_id ? Route::find($paymentHistory->route_id)->name : "Unknown";
+                $paymentHistory->payment_id = $paymentHistory->payment_id ? Payment::find($paymentHistory->payment_id)->name : "Unknown";
+
                 $paymentHistory->created_by = $paymentHistory->created_by ? User::find($paymentHistory->created_by)->name : "Unknown";
                 $paymentHistory->updated_by = $paymentHistory->updated_by ? User::find($paymentHistory->updated_by)->name : "Unknown";
                 $paymentHistory->deleted_by = $paymentHistory->deleted_by ? User::find($paymentHistory->deleted_by)->name : "Unknown";

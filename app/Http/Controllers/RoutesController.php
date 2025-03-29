@@ -8,6 +8,7 @@ use App\Models\Counter;
 use App\Models\Routes;
 use App\Models\User;
 use App\Models\VehiclesType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,23 +18,34 @@ class RoutesController extends Controller
     {
         DB::beginTransaction();
         try {
-
             $isSpecial = $request->input('is_spicial');
+            $startingPoint = $request->input('starting_point');
+            $endingPoint = $request->input('ending_point');
+            $selectedDate = $request->input('selected_date');
+            $now = Carbon::now()->format('Y-m-d H:i:s'); // Format the current time correctly
 
-            $routess = Routes::query();
-
-            if ($isSpecial !== null) {
-                $routess->whereNotNull('start_date');
-            }
-
-            $routess = Routes::with([
-                'vehicles_type'
-            ])
+            $routess = Routes::query()
+                ->when($isSpecial, function ($query, $isSpecial) {
+                    return $query->whereNotNull('start_date');
+                })
+                ->when($startingPoint, function ($query, $startingPoint) {
+                    return $query->where('starting_point', $startingPoint);
+                })
+                ->when($endingPoint, function ($query, $endingPoint) {
+                    return $query->where('ending_point', $endingPoint);
+                })
+                ->when($selectedDate, function ($query, $selectedDate) {
+                    $parsedDate = Carbon::parse($selectedDate);
+                    $dayOfWeek = $parsedDate->format('l');
+                    return $query->whereJsonContains('day_off', $dayOfWeek);
+                })
+                ->with(['vehicles_type'])
                 ->sortingQuery()
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
                 ->paginationQuery();
+
             DB::commit();
 
             $routess->transform(function ($routes) {
@@ -46,8 +58,66 @@ class RoutesController extends Controller
                 $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
                 return $routes;
             });
+
             DB::commit();
-            return $this->success('routess retrived successfully', $routess);
+            return $this->success('routess retrieved successfully', $routess);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
+    }
+
+    public function index_for_web(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $isSpecial = $request->input('is_spicial');
+            $startingPoint = $request->input('starting_point');
+            $endingPoint = $request->input('ending_point');
+            $selectedDate = $request->input('selected_date');
+            $now = Carbon::now()->format('Y-m-d H:i:s');
+
+            $routess = Routes::query()
+                ->when($isSpecial, function ($query, $isSpecial) {
+                    return $query->whereNotNull('start_date');
+                })
+                ->when($startingPoint, function ($query, $startingPoint) {
+                    return $query->where('starting_point', $startingPoint);
+                })
+                ->when($endingPoint, function ($query, $endingPoint) {
+                    return $query->where('ending_point', $endingPoint);
+                })
+                ->when($selectedDate, function ($query, $selectedDate) {
+                    $parsedDate = Carbon::parse($selectedDate);
+                    $dayOfWeek = $parsedDate->format('l');
+                    return $query->whereJsonContains('day_off', $dayOfWeek);
+                })
+                ->whereNotBetween(DB::raw("'$now'"), [
+                    DB::raw("datetime(departure, '-' || last_min || ' minutes')"),
+                    DB::raw("departure")
+                ]) // Exclude when NOW() is between (departure - last_min) and departure
+                ->with(['vehicles_type'])
+                ->sortingQuery()
+                ->searchQuery()
+                ->filterQuery()
+                ->filterDateQuery()
+                ->paginationQuery();
+
+            DB::commit();
+
+            $routess->transform(function ($routes) {
+                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
+                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
+                $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
+
+                $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
+                $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
+                $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
+                return $routes;
+            });
+
+            DB::commit();
+            return $this->success('routess retrieved successfully', $routess);
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();

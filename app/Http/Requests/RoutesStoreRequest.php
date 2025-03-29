@@ -41,8 +41,11 @@ class RoutesStoreRequest extends FormRequest
             'day_off' => 'nullable| json',
             'start_date' => 'timestamp| nullable',
             'price' => 'string| required',
-            'departure' => 'timestamp| required',
-            'arrivals' => 'timestamp| required',
+            'fprice' => 'string| required',
+            'last_min' => 'string| required',
+            'cancle_booking' => 'string| required',
+            'departure' => 'required',
+            'arrivals' => 'required',
 
             'starting_point' => "required|in:$counters",
             'ending_point' => "required|in:$counters|different:starting_point",
