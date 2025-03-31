@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PaymentController extends Controller
 {
@@ -39,6 +40,19 @@ class PaymentController extends Controller
     {
         DB::beginTransaction();
         $payload = collect($request->validated());
+
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('public/images');
+            $image_url = Storage::url($path);
+            $payload['photo'] = $image_url;
+        }
+
+        if ($request->hasFile('acc_qr')) {
+            $path = $request->file('acc_qr')->store('public/images');
+            $image_url = Storage::url($path);
+            $payload['acc_qr'] = $image_url;
+        }
+
         try {
             $payment = Payment::create($payload->toArray());
             DB::commit();
