@@ -9,6 +9,7 @@ use App\Models\Routes;
 use App\Models\User;
 use App\Models\VehiclesType;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -106,8 +107,8 @@ class RoutesController extends Controller
             DB::commit();
 
             $routess->transform(function ($routes) {
-                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
-                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
+                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->city : "Unknown";
+                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->city : "Unknown";
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
 
                 $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
