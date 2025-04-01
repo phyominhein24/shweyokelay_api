@@ -7,6 +7,8 @@ use App\Http\Requests\RoutesUpdateRequest;
 use App\Models\Counter;
 use App\Models\Routes;
 use App\Models\User;
+use App\Enums\OrderStatusEnum;
+use App\Models\PaymentHistory;
 use App\Models\VehiclesType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -76,7 +78,7 @@ class RoutesController extends Controller
             $endingPoint = $request->input('ending_point');
             $selectedDate = $request->input('selected_date');
             $now = Carbon::now()->format('Y-m-d H:i:s');
-
+            
             $routess = Routes::query()
                 ->when($isSpecial, function ($query, $isSpecial) {
                     return $query->whereNotNull('start_date');
@@ -92,10 +94,14 @@ class RoutesController extends Controller
                     $dayOfWeek = $parsedDate->format('l');
                     return $query->whereJsonContains('day_off', $dayOfWeek);
                 })
+                // ->whereNotBetween(DB::raw("'$now'"), [
+                //     DB::raw("datetime(departure, '-' || last_min || ' minutes')"),
+                //     DB::raw("departure")
+                // ])
                 ->whereNotBetween(DB::raw("'$now'"), [
-                    DB::raw("datetime(departure, '-' || last_min || ' minutes')"),
-                    DB::raw("departure")
-                ]) // Exclude when NOW() is between (departure - last_min) and departure
+                    DB::raw("strftime('%H:%M', departure, '-' || last_min || ' minutes')"),
+                    DB::raw("strftime('%H:%M', departure)")
+                ])
                 ->with(['vehicles_type'])
                 ->sortingQuery()
                 ->searchQuery()
@@ -105,11 +111,15 @@ class RoutesController extends Controller
 
             DB::commit();
 
-            $routess->transform(function ($routes) {
+            $routess->transform(function ($routes) use ($selectedDate) {
+                $routes->orders = PaymentHistory::where('route_id', $routes->id)
+                    ->where('start_time', $selectedDate)
+                    ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
+                    ->get();
                 $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
                 $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
-
+    
                 $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
                 $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
                 $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
@@ -117,7 +127,9 @@ class RoutesController extends Controller
             });
 
             DB::commit();
-            return $this->success('routess retrieved successfully', $routess);
+            return $this->success('Routes retrieved successfully', [
+                'routes' => $routess
+            ]);
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();

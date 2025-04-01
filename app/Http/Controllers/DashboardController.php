@@ -6,6 +6,7 @@ use App\Models\Shop;
 use App\Models\Member;
 use App\Models\PaymentHistory;
 use App\Enums\OrderStatusEnum;
+use Illuminate\Support\Facades\DB;
 use App\Models\Counter;
 // use App\Models\Cashier;
 // use App\Models\Item;
@@ -102,5 +103,22 @@ class DashboardController extends Controller
                 'reject' => $reject
             ]
         ]);
+    }
+
+    public function cancleTicket($id)
+    {
+        
+        DB::beginTransaction();
+        try {
+            $paymentHistory = PaymentHistory::findOrFail($id);
+            $paymentHistory->status = OrderStatusEnum::CANCLE;
+            $paymentHistory->save();
+
+            DB::commit();
+            return $this->success('Payment history status updated to CANCLE', $paymentHistory);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
     }
 }

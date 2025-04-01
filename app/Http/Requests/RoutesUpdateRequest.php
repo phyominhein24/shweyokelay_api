@@ -36,7 +36,7 @@ class RoutesUpdateRequest extends FormRequest
         $routesId = $routes->id;
 
         return [
-            'name' => "required|string| unique:routes,name,$routesId| max:24 | min:1",
+            'name' => "required|string| max:1000 | min:1",
 
             'distance' => 'string| nullable',
             'duration' => 'string| nullable',

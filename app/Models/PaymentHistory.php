@@ -49,8 +49,10 @@ class PaymentHistory extends Model
         });
 
         static::updating(function ($model) {
+            $userId = auth()->check() ? auth()->user()->id : 1;
+            
             if (!$model->isDirty('updated_by')) {
-                $model->updated_by = auth()->user()->id;
+                $model->updated_by = $userId;
             }
         });
     }

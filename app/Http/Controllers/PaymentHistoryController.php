@@ -53,8 +53,13 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
         try {
             $paymentHistory = PaymentHistory::create($payload->toArray());
-            DB::commit();
-
+            
+            if ($request->hasFile('screenshot')) {
+                $path = $request->file('screenshot')->store('public/images');
+                $image_url = Storage::url($path);
+                $payload['screenshot'] = $image_url;
+            }
+            
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
@@ -66,6 +71,8 @@ class PaymentHistoryController extends Controller
                     'route_id' => $payload->get('route_id')
                 ]);
             }
+
+            DB::commit();
 
             return $this->success('paymentHistory created successfully', $paymentHistory);
         } catch (Exception $e) {

@@ -43,7 +43,7 @@ class PaymentHistoryStoreRequest extends FormRequest
             'start_time' => 'nullable',
             'member_id' => "nullable|in:$members",
             'route_id' => "required|in:$routes",
-            'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'payment_id' => "nullable|in:$payments",
             'status' => "in:$enum"
         ];
