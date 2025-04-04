@@ -16,6 +16,7 @@ class DailyRouteController extends Controller
         DB::beginTransaction();
         try {
             $dailyRoutes = DailyRoute::sortingQuery()
+                ->with(['route'])
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()

@@ -6,7 +6,7 @@ use App\Models\Shop;
 use App\Models\Member;
 use App\Models\PaymentHistory;
 use App\Enums\OrderStatusEnum;
-// use App\Models\User;
+use App\Models\Counter;
 // use App\Models\Cashier;
 // use App\Models\Item;
 // use App\Models\Material;
@@ -63,7 +63,6 @@ class DashboardController extends Controller
             return response()->json(['message' => 'Member not found'], 404);
         }
 
-        // Count different statuses directly from the database
         $booked = PaymentHistory::where('member_id', $id)
             ->where('status', OrderStatusEnum::SUCCESS)
             ->count();
@@ -76,8 +75,23 @@ class DashboardController extends Controller
             ->where('status', OrderStatusEnum::REJECT)
             ->count();
 
-        // Fetch all payment history for the member
-        $paymentHistory = PaymentHistory::where('member_id', $id)->get();
+        $paymentHistory = PaymentHistory::where('member_id', $id)
+            ->with(['route'])
+            ->get();
+        
+        $paymentHistory->transform(function ($payment) {
+            // Check if route exists before accessing it
+          
+            if ($payment->route) {
+                $startingCounter = Counter::find($payment->route->starting_point);
+                $endingCounter = Counter::find($payment->route->ending_point);
+
+                $payment->route->starting_point2 = $startingCounter ? $startingCounter->name : "Unknown";
+                $payment->route->ending_point2 = $endingCounter ? $endingCounter->name : "Unknown";
+            }
+        
+            return $payment;
+        });
 
         return response()->json([
             'data' => [

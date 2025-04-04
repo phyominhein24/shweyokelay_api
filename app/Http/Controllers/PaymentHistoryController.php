@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PaymentHistoryStoreRequest;
 use App\Http\Requests\PaymentHistoryUpdateRequest;
+use App\Enums\OrderStatusEnum;
 use App\Models\PaymentHistory;
 use App\Models\User;
 use App\Models\Member;
-use App\Models\Route;
+use App\Models\DailyRoute;
+use App\Models\Routes;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class PaymentHistoryController extends Controller
 {
@@ -19,6 +23,7 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         try {
             $paymentHistorys = PaymentHistory::sortingQuery()
+                ->with(['route'])
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
@@ -26,7 +31,7 @@ class PaymentHistoryController extends Controller
 
             $paymentHistorys->transform(function ($paymentHistory) {
                 $paymentHistory->member_id = $paymentHistory->member_id ? Member::find($paymentHistory->member_id)->name : "Unknown";
-                $paymentHistory->route_id = $paymentHistory->route_id ? Route::find($paymentHistory->route_id)->name : "Unknown";
+                $paymentHistory->route_id = $paymentHistory->route_id ? Routes::find($paymentHistory->route_id)->name : "Unknown";
                 $paymentHistory->payment_id = $paymentHistory->payment_id ? Payment::find($paymentHistory->payment_id)->name : "Unknown";
 
                 $paymentHistory->created_by = $paymentHistory->created_by ? User::find($paymentHistory->created_by)->name : "Unknown";
@@ -49,7 +54,52 @@ class PaymentHistoryController extends Controller
         try {
             $paymentHistory = PaymentHistory::create($payload->toArray());
             DB::commit();
+
+            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
+
+            $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
+                ->whereDate('created_at', $startDate)
+                ->first();
+
+            if (!$dailyRoute) {
+                DailyRoute::create([
+                    'route_id' => $payload->get('route_id')
+                ]);
+            }
+
             return $this->success('paymentHistory created successfully', $paymentHistory);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
+    }
+
+    public function confirm($id) 
+    {
+        DB::beginTransaction();
+        try {
+            $paymentHistory = PaymentHistory::findOrFail($id);
+            $paymentHistory->status = OrderStatusEnum::SUCCESS;
+            $paymentHistory->save();
+
+            DB::commit();
+            return $this->success('Payment history status updated to SUCCESS', $paymentHistory);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
+    }
+
+    public function reject($id) 
+    {
+        DB::beginTransaction();
+        try {
+            $paymentHistory = PaymentHistory::findOrFail($id);
+            $paymentHistory->status = OrderStatusEnum::REJECT;
+            $paymentHistory->save();
+
+            DB::commit();
+            return $this->success('Payment history status updated to REJECT', $paymentHistory);
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();

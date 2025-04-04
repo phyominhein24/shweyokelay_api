@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyRoute extends Model
 {
@@ -28,11 +29,13 @@ class DailyRoute extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            $userId = auth()->check() ? auth()->user()->id : 1;
+        
             if (!$model->isDirty('created_by')) {
-                $model->created_by = auth()->user()->id;
+                $model->created_by = $userId;
             }
             if (!$model->isDirty('updated_by')) {
-                $model->updated_by = auth()->user()->id;
+                $model->updated_by = $userId;
             }
         });
 
