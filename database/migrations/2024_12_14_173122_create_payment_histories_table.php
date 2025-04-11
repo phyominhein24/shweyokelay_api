@@ -14,10 +14,11 @@ return new class extends Migration
     {
         Schema::create('payment_histories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('member_id')->nullable();;
+            $table->unsignedBigInteger('member_id')->nullable();
+            $table->string('kpay_member_id')->nullable();
             $table->unsignedBigInteger('route_id');
-            $table->unsignedBigInteger('payment_id');
-            $table->string('screenshot');
+            $table->unsignedBigInteger('payment_id')->nullable();
+            $table->string('screenshot')->nullable();
             $table->string('phone');
             $table->string('nrc');
             $table->json('seat');

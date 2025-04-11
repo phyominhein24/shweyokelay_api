@@ -14,6 +14,7 @@ class PaymentHistory extends Model
 
     protected $fillable = [
         'member_id',
+        'kpay_member_id',
         'route_id',
         'payment_id',
         'screenshot',

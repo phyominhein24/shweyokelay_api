@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DailyRouteStoreRequest;
 use App\Http\Requests\DailyRouteUpdateRequest;
 use App\Models\DailyRoute;
+use App\Models\VehiclesType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

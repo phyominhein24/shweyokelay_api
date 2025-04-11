@@ -52,7 +52,44 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         $payload = collect($request->validated());
         try {
+            
+            if ($request->hasFile('screenshot')) {
+                $path = $request->file('screenshot')->store('public/images');
+                $image_url = Storage::url($path);
+                $payload['screenshot'] = $image_url;
+            }
+
             $paymentHistory = PaymentHistory::create($payload->toArray());
+            
+            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
+
+            $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
+                ->whereDate('created_at', $startDate)
+                ->first();
+
+            if (!$dailyRoute) {
+                DailyRoute::create([
+                    'route_id' => $payload->get('route_id')
+                ]);
+            }
+
+            DB::commit();
+
+            return $this->success('paymentHistory created successfully', $paymentHistory);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
+    }
+
+    public function store2(PaymentHistoryStoreRequest $request)
+    {
+        DB::beginTransaction();
+        $payload = collect($request->validated());
+        try {
+            $paymentHistory = PaymentHistory::create($payload->toArray());
+            $paymentHistory->status = OrderStatusEnum::SUCCESS;
+            $paymentHistory->save();
             
             if ($request->hasFile('screenshot')) {
                 $path = $request->file('screenshot')->store('public/images');

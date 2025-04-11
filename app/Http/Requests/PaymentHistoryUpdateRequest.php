@@ -42,8 +42,9 @@ class PaymentHistoryUpdateRequest extends FormRequest
             'note' => 'string| nullable| max:1000',
             'start_time' => 'nullable',
             'member_id' => "nullable|in:$members",
+            'kpay_member_id' => 'nullable',
             'route_id' => "required|in:$routes",
-            'screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'payment_id' => "nullable|in:$payments",
             'status' => "required|in:$enum"
         ];

@@ -20,7 +20,7 @@ class RoutesController extends Controller
     {
         DB::beginTransaction();
         try {
-            $isSpecial = $request->input('is_spicial');
+            $isSpecial = $request->input('is_speicial');
             $startingPoint = $request->input('starting_point');
             $endingPoint = $request->input('ending_point');
             $selectedDate = $request->input('selected_date');
@@ -73,16 +73,12 @@ class RoutesController extends Controller
     {
         DB::beginTransaction();
         try {
-            $isSpecial = $request->input('is_spicial');
             $startingPoint = $request->input('starting_point');
             $endingPoint = $request->input('ending_point');
             $selectedDate = $request->input('selected_date');
             $now = Carbon::now()->format('Y-m-d H:i:s');
             
             $routess = Routes::query()
-                ->when($isSpecial, function ($query, $isSpecial) {
-                    return $query->whereNotNull('start_date');
-                })
                 ->when($startingPoint, function ($query, $startingPoint) {
                     return $query->where('starting_point', $startingPoint);
                 })
