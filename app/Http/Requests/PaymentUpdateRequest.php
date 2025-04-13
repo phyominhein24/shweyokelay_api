@@ -28,10 +28,14 @@ class PaymentUpdateRequest extends FormRequest
     {
         return [
             'name' => 'string| max:1000',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo' => $this->hasFile('photo')
+            ? 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            : 'nullable|string',
             'acc_name' => 'string| max:1000',
             'acc_number' => 'numeric',
-            'acc_qr' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ];
+            'acc_qr' => $this->hasFile('acc_qr')
+                ? 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+                : 'nullable|string',
+            ];
     }
 }

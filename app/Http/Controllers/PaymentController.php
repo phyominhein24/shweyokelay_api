@@ -82,6 +82,19 @@ class PaymentController extends Controller
         $payload = collect($request->validated());
         try {
             $payment = Payment::findOrFail($id);
+
+            if ($request->hasFile('photo')) {
+                $path = $request->file('photo')->store('public/images');
+                $image_url = Storage::url($path);
+                $payload['photo'] = $image_url;
+            }
+    
+            if ($request->hasFile('acc_qr')) {
+                $path = $request->file('acc_qr')->store('public/images');
+                $image_url = Storage::url($path);
+                $payload['acc_qr'] = $image_url;
+            }
+            
             $payment->update($payload->toArray());
             DB::commit();
             return $this->success('payment updated successfully by id', $payment);

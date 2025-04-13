@@ -23,7 +23,7 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         try {
             $paymentHistorys = PaymentHistory::sortingQuery()
-                ->with(['route'])
+                ->with(['route','member'])
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
@@ -58,20 +58,24 @@ class PaymentHistoryController extends Controller
                 $image_url = Storage::url($path);
                 $payload['screenshot'] = $image_url;
             }
-
-            $paymentHistory = PaymentHistory::create($payload->toArray());
             
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-                ->whereDate('created_at', $startDate)
+                ->whereDate('start_date', $startDate)
                 ->first();
 
             if (!$dailyRoute) {
-                DailyRoute::create([
-                    'route_id' => $payload->get('route_id')
+                $dailyRoute = DailyRoute::create([
+                    'route_id' => $payload->get('route_id'),
+                    'start_date' => $startDate
                 ]);
             }
+
+            $payloadArray = $payload->toArray();
+            $payloadArray['daily_route_id'] = $dailyRoute->id;
+
+            $paymentHistory = PaymentHistory::create($payloadArray);
 
             DB::commit();
 

@@ -60,11 +60,11 @@ class WebAuthController extends Controller
              }
      
              if ($user->status !== GeneralStatusEnum::ACTIVE->value) {
-                 return response()->json(['message' => 'Account is not ACTIVE'], 403);
+                 return response()->json(['message' => 'Account is not ACTIVE'], 404);
              }
      
              if (!\Hash::check($payload->get('password'), $user->password)) {
-                 return response()->json(['message' => 'Invalid email or password'], 401);
+                 return response()->json(['message' => 'Invalid email or password'], 404);
              }
      
              $guard = $user instanceof Member ? 'member' : 'api';

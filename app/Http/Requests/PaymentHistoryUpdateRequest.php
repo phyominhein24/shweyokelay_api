@@ -7,6 +7,7 @@ use App\Helpers\Enum;
 use App\Models\Member;
 use App\Models\Routes;
 use App\Models\Payment;
+use App\Models\DailyRoute;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PaymentHistoryUpdateRequest extends FormRequest
@@ -30,6 +31,8 @@ class PaymentHistoryUpdateRequest extends FormRequest
         $members = implode(',', $members);
         $payments = Payment::all()->pluck('id')->toArray();
         $payments = implode(',', $payments);
+        $dailyRoute = DailyRoute::all()->pluck('id')->toArray();
+        $dailyRoute = implode(',', $dailyRoute);
         $routes = Routes::all()->pluck('id')->toArray();
         $routes = implode(',', $routes);
         $enum = implode(',', (new Enum(OrderStatusEnum::class))->values());
@@ -46,6 +49,7 @@ class PaymentHistoryUpdateRequest extends FormRequest
             'route_id' => "required|in:$routes",
             'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'payment_id' => "nullable|in:$payments",
+            'daily_route_id' => "nullable|in:$dailyRoute",
             'status' => "required|in:$enum"
         ];
     }

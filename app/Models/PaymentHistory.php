@@ -25,6 +25,7 @@ class PaymentHistory extends Model
         'note',
         'start_time',
         'status',
+        'daily_route_id'
     ];
 
     protected $casts = [

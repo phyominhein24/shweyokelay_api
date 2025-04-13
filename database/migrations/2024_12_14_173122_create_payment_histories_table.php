@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('kpay_member_id')->nullable();
             $table->unsignedBigInteger('route_id');
             $table->unsignedBigInteger('payment_id')->nullable();
+            $table->unsignedBigInteger('daily_route_id')->nullable();
             $table->string('screenshot')->nullable();
             $table->string('phone');
             $table->string('nrc');
@@ -41,6 +42,11 @@ return new class extends Migration
             $table->foreign('payment_id')
                 ->references('id')
                 ->on('payments')
+                ->onDelete('cascade');
+            
+            $table->foreign('daily_route_id')
+                ->references('id')
+                ->on('daily_routes')
                 ->onDelete('cascade');
         });
     }

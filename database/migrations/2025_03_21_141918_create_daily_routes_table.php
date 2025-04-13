@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('driver_name')->nullable();
             $table->string('car_no')->nullable();
             $table->unsignedBigInteger('route_id');
+            $table->timestamp('start_date');
             $table->string('status')->default(GeneralStatusEnum::ACTIVE->value);
             $table->auditColumns();
 
