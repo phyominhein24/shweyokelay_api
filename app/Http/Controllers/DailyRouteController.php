@@ -55,7 +55,7 @@ class DailyRouteController extends Controller
     {
         DB::beginTransaction();
         try {
-            $dailyRoute = DailyRoute::with(['route','paymentHistories'])->findOrFail($id);
+            $dailyRoute = DailyRoute::with(['route','route.vehicles_type','paymentHistories',])->findOrFail($id);
             DB::commit();
             return $this->success('dailyRoute retrieved successfully by id', $dailyRoute);
         } catch (Exception $e) {

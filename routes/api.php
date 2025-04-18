@@ -33,6 +33,7 @@ Route::post('/forget-password', [PasswordResetController::class, 'forgetPassword
 Route::get('/reset-password', [PasswordResetController::class, 'resetPasswordPage'])->middleware('guest');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('guest');
 
+
 Route::get('/payments', [PaymentController::class, 'index']);
 Route::get('/counters', [CounterController::class, 'index']);
 Route::get('/route', [RoutesController::class, 'index_for_web']);
@@ -63,6 +64,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::middleware('jwt')->group(function () {
 
+    Route::get('/dashboard/payment-stats', [DashboardController::class, 'paymentStats']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);

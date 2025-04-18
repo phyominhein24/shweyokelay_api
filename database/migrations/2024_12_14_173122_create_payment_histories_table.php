@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('payment_id')->nullable();
             $table->unsignedBigInteger('daily_route_id')->nullable();
             $table->string('screenshot')->nullable();
+            $table->string('name');
             $table->string('phone');
             $table->string('nrc');
             $table->json('seat');

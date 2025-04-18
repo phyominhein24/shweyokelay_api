@@ -23,6 +23,7 @@ class PaymentHistory extends Model
         'seat',
         'total',
         'note',
+        'name',
         'start_time',
         'status',
         'daily_route_id'

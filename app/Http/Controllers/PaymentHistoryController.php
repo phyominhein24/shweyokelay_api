@@ -91,27 +91,32 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         $payload = collect($request->validated());
         try {
-            $paymentHistory = PaymentHistory::create($payload->toArray());
-            $paymentHistory->status = OrderStatusEnum::SUCCESS;
-            $paymentHistory->save();
             
-            if ($request->hasFile('screenshot')) {
-                $path = $request->file('screenshot')->store('public/images');
-                $image_url = Storage::url($path);
-                $payload['screenshot'] = $image_url;
-            }
+            // if ($request->hasFile('screenshot')) {
+            //     $path = $request->file('screenshot')->store('public/images');
+            //     $image_url = Storage::url($path);
+            //     $payload['screenshot'] = $image_url;
+            // }
             
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-                ->whereDate('created_at', $startDate)
+                ->whereDate('start_date', $startDate)
                 ->first();
 
             if (!$dailyRoute) {
-                DailyRoute::create([
-                    'route_id' => $payload->get('route_id')
+                $dailyRoute = DailyRoute::create([
+                    'route_id' => $payload->get('route_id'),
+                    'start_date' => $startDate
                 ]);
             }
+
+            $payloadArray = $payload->toArray();
+            $payloadArray['daily_route_id'] = $dailyRoute->id;
+
+            $paymentHistory = PaymentHistory::create($payloadArray);
+            $paymentHistory->status = OrderStatusEnum::SUCCESS;
+            $paymentHistory->save();
 
             DB::commit();
 
