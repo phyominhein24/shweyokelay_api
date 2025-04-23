@@ -48,8 +48,8 @@ class RoutesUpdateRequest extends FormRequest
             'fprice' => 'string| required',
             'last_min' => 'string| required',
             'cancle_booking' => 'string| required',
-            'departure' => 'timestamp| required',
-            'arrivals' => 'timestamp| required',
+            'departure' => 'required',
+            'arrivals' => 'required',
 
             'starting_point' => "required|in:$counters",
             'ending_point' => "required|in:$counters|different:starting_point",

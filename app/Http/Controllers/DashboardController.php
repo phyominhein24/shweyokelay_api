@@ -98,6 +98,30 @@ class DashboardController extends Controller
         ], 200);
     }
 
+    public function topAgents()
+    {
+        $topAgents = DB::table('payment_histories')
+            ->join('members', 'payment_histories.member_id', '=', 'members.id')
+            ->select(
+                'members.id',
+                'members.name',
+                'members.phone',
+                DB::raw('SUM(payment_histories.total) as total_sales')
+            )
+            ->where('members.is_agent', true)
+            ->where('payment_histories.status', OrderStatusEnum::SUCCESS->value)
+            ->groupBy('members.id', 'members.name', 'members.phone')
+            ->orderByDesc('total_sales')
+            ->limit(10)
+            ->get();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Dashboard data fetched successfully',
+                'data' => $topAgents
+            ], 200);
+    }
+
     public function memberProfile($id)
     {
         $member = Member::find($id);

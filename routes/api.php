@@ -64,6 +64,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::middleware('jwt')->group(function () {
 
+    Route::get('/dashboard/top-agents', [DashboardController::class, 'topAgents']);
     Route::get('/dashboard/payment-stats', [DashboardController::class, 'paymentStats']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);

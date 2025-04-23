@@ -39,7 +39,7 @@ class PaymentHistoryUpdateRequest extends FormRequest
 
         return [
             'phone' => 'min:1|max:13',
-            'nrc' => 'string| max:1000',
+            'nrc' => 'nullable|string| max:1000',
             'name' => 'string| max:1000',
             'seat' => 'nullable| json',
             'total' => 'numeric',

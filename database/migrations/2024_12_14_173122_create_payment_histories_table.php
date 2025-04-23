@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('screenshot')->nullable();
             $table->string('name');
             $table->string('phone');
-            $table->string('nrc');
+            $table->string('nrc')->nullable();;
             $table->json('seat');
             $table->integer('total');
             $table->string('note');
