@@ -13,7 +13,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payment_histories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->uuid('prepay_id')->unique();
             $table->unsignedBigInteger('member_id')->nullable();
             $table->string('kpay_member_id')->nullable();
             $table->unsignedBigInteger('route_id');

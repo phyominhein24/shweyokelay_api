@@ -45,6 +45,8 @@ Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
 Route::get('members/{id}', [MemberController::class, 'show']);
 
+Route::post('/payment/create-order', [PaymentHistoryController::class, 'createOrder']);
+
 Route::get('contact/', [ContactController::class, 'index']);
 Route::post('contact/', [ContactController::class, 'store']);
 Route::get('contact/{id}', [ContactController::class, 'show']);

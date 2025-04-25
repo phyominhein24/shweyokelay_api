@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 
 class PaymentHistory extends Model
@@ -48,6 +49,12 @@ class PaymentHistory extends Model
             }
             if (!$model->isDirty('updated_by')) {
                 $model->updated_by = $userId;
+            }
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
+            if (empty($model->prepay_id)) {
+                $model->prepay_id = (string) Str::uuid();
             }
         });
 

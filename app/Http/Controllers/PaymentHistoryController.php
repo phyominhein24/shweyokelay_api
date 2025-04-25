@@ -15,6 +15,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Services\PaymentService;
+use App\Utilities\EncryptionHelper;
+use App\Utilities\GeneralHelper;
+
 
 class PaymentHistoryController extends Controller
 {
@@ -120,7 +124,56 @@ class PaymentHistoryController extends Controller
 
             DB::commit();
 
-            return $this->success('paymentHistory created successfully', $paymentHistory);
+            $totalAmount = $request->input('total_amount');
+            $timestamp = GeneralHelper::getUnixTimestamp();
+            $nonceStr = GeneralHelper::generateRandomString();
+    
+            $sign = EncryptionHelper::generateSignature([
+                'nonce_str' => $nonceStr,
+                'total_amount' => $totalAmount,
+                'timestamp' => $timestamp,
+                'title' => 'iPhoneX',
+                'order_id' => $nonceStr
+            ]);
+    
+            $orderInfo = [
+                'Request' => [
+                    'timestamp' => $timestamp,
+                    'notify_url' => config('payment.notify_url'),
+                    'nonce_str' => $nonceStr,
+                    'method' => config('payment.method'),
+                    'sign_type' => config('payment.sign_type'),
+                    'version' => config('payment.version'),
+                    'biz_content' => [
+                        'merch_order_id' => $nonceStr,
+                        'merch_code' => config('payment.merchant_code'),
+                        'appid' => config('payment.appid'),
+                        'trade_type' => config('payment.trade_type'),
+                        'title' => 'iPhoneX',
+                        'total_amount' => $totalAmount,
+                        'trans_currency' => config('payment.trans_currency'),
+                        'timeout_express' => config('payment.timeout_express'),
+                        'callback_info' => config('payment.callback_info')
+                    ],
+                    'sign' => $sign
+                ]
+            ];
+    
+            // $response = PaymentService::createOrder($orderInfo);
+            return response()->json([
+                'status' => 200,
+                'message' => 'successfully',
+                'data' => [
+                    'result' => $paymentHistory,
+                    'prepay_id' => $paymentHistory->prepay_id,
+                    'orderInfo' => json_encode($orderInfo),
+                    'sign' => $sign,
+                    'signType' => config('payment.sign_type')
+                ]
+            ], 200);
+            
+
+            // return $this->success('paymentHistory created successfully', $paymentHistory);
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();
@@ -157,6 +210,54 @@ class PaymentHistoryController extends Controller
             DB::rollback();
             return $this->internalServerError();
         }
+    }
+
+    public function createOrder(Request $request)
+    {
+        $totalAmount = $request->input('total_amount');
+        $timestamp = GeneralHelper::getUnixTimestamp();
+        $nonceStr = GeneralHelper::generateRandomString();
+
+        $sign = EncryptionHelper::generateSignature([
+            'nonce_str' => $nonceStr,
+            'total_amount' => $totalAmount,
+            'timestamp' => $timestamp,
+            'title' => 'iPhoneX',
+            'order_id' => $nonceStr
+        ]);
+
+        $orderInfo = [
+            'Request' => [
+                'timestamp' => $timestamp,
+                'notify_url' => config('payment.notify_url'),
+                'nonce_str' => $nonceStr,
+                'method' => config('payment.method'),
+                'sign_type' => config('payment.sign_type'),
+                'version' => config('payment.version'),
+                'biz_content' => [
+                    'merch_order_id' => $nonceStr,
+                    'merch_code' => config('payment.merchant_code'),
+                    'appid' => config('payment.appid'),
+                    'trade_type' => config('payment.trade_type'),
+                    'title' => 'iPhoneX',
+                    'total_amount' => $totalAmount,
+                    'trans_currency' => config('payment.trans_currency'),
+                    'timeout_express' => config('payment.timeout_express'),
+                    'callback_info' => config('payment.callback_info')
+                ],
+                'sign' => $sign
+            ]
+        ];
+
+        // $response = PaymentService::createOrder($orderInfo);
+        
+        return response()->json([
+            'result' => $response['result'],
+            'prepay_id' => $response['prepay_id'],
+            'orderInfo' => json_encode($orderInfo),
+            'sign' => $sign,
+            'signType' => config('payment.sign_type')
+        ]);
     }
 
     public function show($id)
