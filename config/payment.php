@@ -2,16 +2,16 @@
 
 return [
 
-    'notify_url'       => env('PAYMENT_NOTIFY_URL', 'https://yourdomain.com/payment/notify'),
-    'method'           => 'pay.createOrder',
-    'sign_type'        => 'sha256',
+    'notify_url'       => env('PAYMENT_NOTIFY_URL', 'http://test.payment.com/notify'),
+    'method'           => 'kbz.payment.precreate',
+    'sign_type'        => 'SHA256',
     'version'          => '1.0',
     'merchant_code'    => env('PAYMENT_MERCHANT_CODE', '911004501'),
     'appid'            => env('PAYMENT_APP_ID', 'kpe474a3a5101c7edb1bf8b84ffadb1b'),
-    'trade_type'       => 'APP',
+    'trade_type'       => 'APPH5',
     'trans_currency'   => 'MMK',
-    'timeout_express'  => '15m',
-    'callback_info'    => 'miniapp_callback',
-    'secret_key'       => env('PAYMENT_SECRET_KEY', 'your_secret_key'),
+    'timeout_express'  => '100m',
+    'callback_info'    => 'title%3diphonex',
+    'secret_key'       => env('PAYMENT_SECRET_KEY', '#N$w#%#Goen)qrH8zYM#MARqVtLEsqRc'),
 
 ];

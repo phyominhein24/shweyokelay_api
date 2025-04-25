@@ -18,6 +18,8 @@ use Carbon\Carbon;
 use App\Services\PaymentService;
 use App\Utilities\EncryptionHelper;
 use App\Utilities\GeneralHelper;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 
 class PaymentHistoryController extends Controller
@@ -158,17 +160,23 @@ class PaymentHistoryController extends Controller
                     'sign' => $sign
                 ]
             ];
+
+            dd($orderInfo['Request']);
     
-            // $response = PaymentService::createOrder($orderInfo);
+            $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo['Request']);
+            // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
+            
+            // dd($response);
             return response()->json([
                 'status' => 200,
                 'message' => 'successfully',
                 'data' => [
-                    'result' => $paymentHistory,
-                    'prepay_id' => $paymentHistory->prepay_id,
+                    'res' => $response['Response'] ?? null,
+                    'result' => $response['Response']['result'] ?? null,
+                    'prepay_id' => $response['Response']['prepay_id'] ?? null,
                     'orderInfo' => json_encode($orderInfo),
                     'sign' => $sign,
-                    'signType' => config('payment.sign_type')
+                    'signType' => $response['Response']['sign_type'] ?? null
                 ]
             ], 200);
             
@@ -250,14 +258,20 @@ class PaymentHistoryController extends Controller
         ];
 
         // $response = PaymentService::createOrder($orderInfo);
+        $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo['Request']);
         
+        dd($response);
         return response()->json([
-            'result' => $response['result'],
-            'prepay_id' => $response['prepay_id'],
-            'orderInfo' => json_encode($orderInfo),
-            'sign' => $sign,
-            'signType' => config('payment.sign_type')
-        ]);
+            'status' => 200,
+            'message' => 'successfully',
+            'data' => [
+                'result' => $response['Response']['result'] ?? null,
+                'prepay_id' => $response['Response']['prepay_id'] ?? null,
+                'orderInfo' => json_encode($orderInfo),
+                'sign' => $sign,
+                'signType' => $response['Response']['sign_type'] ?? null
+            ]
+        ], 200);
     }
 
     public function show($id)
