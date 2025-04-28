@@ -98,23 +98,25 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
         try {
             
-            // $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
-            // $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-            //     ->whereDate('start_date', $startDate)
-            //     ->first();
+            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
+            $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
+                ->whereDate('start_date', $startDate)
+                ->first();
 
-            // if (!$dailyRoute) {
-            //     $dailyRoute = DailyRoute::create([
-            //         'route_id' => $payload->get('route_id'),
-            //         'start_date' => $startDate
-            //     ]);
-            // }
-            // $payloadArray = $payload->toArray();
-            // $payloadArray['daily_route_id'] = $dailyRoute->id;
-            // $paymentHistory = PaymentHistory::create($payloadArray);
+            if (!$dailyRoute) {
+                $dailyRoute = DailyRoute::create([
+                    'route_id' => $payload->get('route_id'),
+                    'start_date' => $startDate
+                ]);
+            }
+            $payloadArray = $payload->toArray();
+            $payloadArray['daily_route_id'] = $dailyRoute->id;
+            $payloadArray['kpay_member_id'] = 1; //delete
+            $payloadArray['status'] = OrderStatusEnum::SUCCESS;
+            $paymentHistory = PaymentHistory::create($payloadArray);
             // $paymentHistory->status = OrderStatusEnum::SUCCESS;
             // $paymentHistory->save();
-            // DB::commit();
+            DB::commit();
 
             $totalAmount = $request->input('total_amount');
             $timestamp = (string) GeneralHelper::getUnixTimestamp();
@@ -290,6 +292,19 @@ class PaymentHistoryController extends Controller
                 'signType' => $response['Response']['sign_type'] ?? null
             ]
         ], 200);
+    }
+
+    public function showKpayMemberTicket($id)
+    {
+        DB::beginTransaction();
+        try {
+            $paymentHistories = PaymentHistory::where('kpay_member_id', $id)->with(['route.vehicles_type'])->get();
+            DB::commit();
+            return $this->success('Payment histories retrieved successfully', $paymentHistories);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
     }
 
     public function show($id)
