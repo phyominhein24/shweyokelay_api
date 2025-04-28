@@ -8,10 +8,10 @@ return [
     'version'          => '1.0',
     'merchant_code'    => env('PAYMENT_MERCHANT_CODE', '911004501'),
     'appid'            => env('PAYMENT_APP_ID', 'kpe474a3a5101c7edb1bf8b84ffadb1b'),
-    'trade_type'       => 'APPH5',
+    'trade_type'       => 'MINIAPP',
     'trans_currency'   => 'MMK',
     'timeout_express'  => '100m',
-    'callback_info'    => 'title%3diphonex',
+    'callback_info'    => 'KBZMINICallBack',
     'secret_key'       => env('PAYMENT_SECRET_KEY', '#N$w#%#Goen)qrH8zYM#MARqVtLEsqRc'),
 
 ];

@@ -98,45 +98,48 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
         try {
             
-            // if ($request->hasFile('screenshot')) {
-            //     $path = $request->file('screenshot')->store('public/images');
-            //     $image_url = Storage::url($path);
-            //     $payload['screenshot'] = $image_url;
+            // $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
+            // $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
+            //     ->whereDate('start_date', $startDate)
+            //     ->first();
+
+            // if (!$dailyRoute) {
+            //     $dailyRoute = DailyRoute::create([
+            //         'route_id' => $payload->get('route_id'),
+            //         'start_date' => $startDate
+            //     ]);
             // }
-            
-            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
-
-            $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-                ->whereDate('start_date', $startDate)
-                ->first();
-
-            if (!$dailyRoute) {
-                $dailyRoute = DailyRoute::create([
-                    'route_id' => $payload->get('route_id'),
-                    'start_date' => $startDate
-                ]);
-            }
-
-            $payloadArray = $payload->toArray();
-            $payloadArray['daily_route_id'] = $dailyRoute->id;
-
-            $paymentHistory = PaymentHistory::create($payloadArray);
-            $paymentHistory->status = OrderStatusEnum::SUCCESS;
-            $paymentHistory->save();
-
-            DB::commit();
+            // $payloadArray = $payload->toArray();
+            // $payloadArray['daily_route_id'] = $dailyRoute->id;
+            // $paymentHistory = PaymentHistory::create($payloadArray);
+            // $paymentHistory->status = OrderStatusEnum::SUCCESS;
+            // $paymentHistory->save();
+            // DB::commit();
 
             $totalAmount = $request->input('total_amount');
-            $timestamp = GeneralHelper::getUnixTimestamp();
+            $timestamp = (string) GeneralHelper::getUnixTimestamp();
             $nonceStr = GeneralHelper::generateRandomString();
-    
-            $sign = EncryptionHelper::generateSignature([
+            $orderStr = GeneralHelper::generateRandomString();
+
+            $signParams = [
+                'appid' => config('payment.appid'),
+                'callback_info' => config('payment.callback_info'),
+                'merch_code' => config('payment.merchant_code'),
+                'merch_order_id' => $orderStr,
+                'method' => config('payment.method'),
                 'nonce_str' => $nonceStr,
-                'total_amount' => $totalAmount,
+                'notify_url' => config('payment.notify_url'),
+                'timeout_express'=> '100m',
                 'timestamp' => $timestamp,
                 'title' => 'iPhoneX',
-                'order_id' => $nonceStr
-            ]);
+                'total_amount' => $totalAmount,
+                'trade_type' => config('payment.trade_type'),
+                'trans_currency' => config('payment.trans_currency'),
+                'version' => config('payment.version'),
+                'key' => config('payment.secret_key')
+            ];
+
+            $sign = EncryptionHelper::generateSignature($signParams);
     
             $orderInfo = [
                 'Request' => [
@@ -144,10 +147,9 @@ class PaymentHistoryController extends Controller
                     'notify_url' => config('payment.notify_url'),
                     'nonce_str' => $nonceStr,
                     'method' => config('payment.method'),
-                    'sign_type' => config('payment.sign_type'),
                     'version' => config('payment.version'),
                     'biz_content' => [
-                        'merch_order_id' => $nonceStr,
+                        'merch_order_id' => $orderStr,
                         'merch_code' => config('payment.merchant_code'),
                         'appid' => config('payment.appid'),
                         'trade_type' => config('payment.trade_type'),
@@ -157,13 +159,27 @@ class PaymentHistoryController extends Controller
                         'timeout_express' => config('payment.timeout_express'),
                         'callback_info' => config('payment.callback_info')
                     ],
-                    'sign' => $sign
+                    'sign' => $sign,
+                    'sign_type' => config('payment.sign_type'),
                 ]
             ];
 
-            dd($orderInfo['Request']);
+            // dd($orderInfo['Request']);
     
-            $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo['Request']);
+            $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo);
+
+            $signParams2 = [
+                'appid' => config('payment.appid'),
+                'merch_code' => config('payment.merchant_code'),
+                'nonce_str' => $nonceStr,
+                'prepay_id' => $response['Response']['prepay_id'] ?? null,
+                'timestamp' => $timestamp,
+                'key' => config('payment.secret_key')
+            ];
+
+            $sign2 = EncryptionHelper::getSignForOrderInfo($signParams2);
+            $sign2String = EncryptionHelper::getSignForOrderInfoString($signParams2);
+
             // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
             
             // dd($response);
@@ -171,11 +187,13 @@ class PaymentHistoryController extends Controller
                 'status' => 200,
                 'message' => 'successfully',
                 'data' => [
-                    'res' => $response['Response'] ?? null,
+                    // 'response' => $response['Response'] ?? null,
+                    // 'request' => $orderInfo['Request'],
+                    // 'signParams' => $signParams,
                     'result' => $response['Response']['result'] ?? null,
                     'prepay_id' => $response['Response']['prepay_id'] ?? null,
-                    'orderInfo' => json_encode($orderInfo),
-                    'sign' => $sign,
+                    'orderInfo' => $sign2String,
+                    'sign' => $sign2,
                     'signType' => $response['Response']['sign_type'] ?? null
                 ]
             ], 200);
