@@ -116,7 +116,6 @@ class PaymentHistoryController extends Controller
             // }
             // $payloadArray = $payload->toArray();
             // $payloadArray['daily_route_id'] = $dailyRoute->id;
-            // $payloadArray['kpay_member_id'] = 1; //delete
             // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
             // $paymentHistory = PaymentHistory::create($payloadArray);
             // // $paymentHistory->status = OrderStatusEnum::SUCCESS;
@@ -232,7 +231,6 @@ class PaymentHistoryController extends Controller
             }
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
-            $payloadArray['kpay_member_id'] = 1; //delete
             $payloadArray['status'] = OrderStatusEnum::SUCCESS;
             $paymentHistory = PaymentHistory::create($payloadArray);
             // $paymentHistory->status = OrderStatusEnum::SUCCESS;
