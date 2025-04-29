@@ -43,6 +43,7 @@ Route::get('/memberProfile/{id}', [DashboardController::class, 'memberProfile'])
 Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
 Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
+Route::post('/paymentHistory4', [PaymentHistoryController::class, 'store3']);
 Route::get('/myticket/{id}', [PaymentHistoryController::class, 'showKpayMemberTicket']);
 Route::get('members/{id}', [MemberController::class, 'show']);
 
