@@ -45,9 +45,10 @@ Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
 Route::post('/paymentHistory4', [PaymentHistoryController::class, 'store3']);
 Route::get('/myticket/{id}', [PaymentHistoryController::class, 'showKpayMemberTicket']);
+Route::post('/auth/get-user-info', [PaymentHistoryController::class, 'authGetUserInfo']);
 Route::get('members/{id}', [MemberController::class, 'show']);
 
-Route::post('/payment/create-order', [PaymentHistoryController::class, 'createOrder']);
+// Route::post('/payment/create-order', [PaymentHistoryController::class, 'createOrder']);
 
 Route::get('contact/', [ContactController::class, 'index']);
 Route::post('contact/', [ContactController::class, 'store']);

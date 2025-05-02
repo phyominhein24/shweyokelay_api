@@ -57,4 +57,22 @@ class EncryptionHelper
 
         return $signString;
     }
+
+    public static function getSignForOrderInfo2($params)
+    {
+
+        $signString = 
+            'access_token=' . $params['access_token'] . '&' .
+            'appid=' . $params['appid'] . '&' .
+            'merch_code=' . $params['merch_code'] . '&' .
+            'method=' . $params['method'] . '&' .
+            'nonce_str=' . $params['nonce_str'] . '&' .
+            'resource_type=' . $params['resource_type'] . '&' .
+            'timestamp=' . $params['timestamp'] . '&' .
+            'trade_type=' . $params['trade_type'] . '&' .
+            'version=' . $params['version'] . '&' .
+            'key=' . $params['key'];
+
+        return Str::upper(hash(Config::get('payment.sign_type'), $signString));
+    }
 }

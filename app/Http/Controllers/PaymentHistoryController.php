@@ -276,56 +276,52 @@ class PaymentHistoryController extends Controller
         }
     }
 
-    public function createOrder(Request $request)
+    public function authGetUserInfo(Request $request)
     {
-        $totalAmount = $request->input('total_amount');
-        $timestamp = GeneralHelper::getUnixTimestamp();
+        $access_token = $request->input('access_token');
+        $timestamp = (string) GeneralHelper::getUnixTimestamp();
         $nonceStr = GeneralHelper::generateRandomString();
 
-        $sign = EncryptionHelper::generateSignature([
+        $signParams = [
+            'access_token' => $access_token,
+            'appid' => config('payment.appid'),
+            'merch_code' => config('payment.merchant_code'),
+            'method' => config('payment.method'),
             'nonce_str' => $nonceStr,
-            'total_amount' => $totalAmount,
+            'resource_type' => 'POENID',
             'timestamp' => $timestamp,
-            'title' => 'iPhoneX',
-            'order_id' => $nonceStr
-        ]);
+            'trade_type' => config('payment.trade_type'),
+            'version' => config('payment.version'),
+            'key' => config('payment.secret_key')
+        ];
+
+        $sign = EncryptionHelper::getSignForOrderInfo2($signParams);
 
         $orderInfo = [
             'Request' => [
-                'timestamp' => $timestamp,
-                'notify_url' => config('payment.notify_url'),
-                'nonce_str' => $nonceStr,
                 'method' => config('payment.method'),
-                'sign_type' => config('payment.sign_type'),
+                'timestamp' => $timestamp,
+                'nonce_str' => $nonceStr,
                 'version' => config('payment.version'),
                 'biz_content' => [
-                    'merch_order_id' => $nonceStr,
                     'merch_code' => config('payment.merchant_code'),
                     'appid' => config('payment.appid'),
+                    'access_token' => $access_token,
                     'trade_type' => config('payment.trade_type'),
-                    'title' => 'iPhoneX',
-                    'total_amount' => $totalAmount,
-                    'trans_currency' => config('payment.trans_currency'),
-                    'timeout_express' => config('payment.timeout_express'),
-                    'callback_info' => config('payment.callback_info')
+                    'resource_type'=> "OPENID",
                 ],
-                'sign' => $sign
+                'sign' => $sign,
+                'sign_type' => config('payment.sign_type'),
             ]
         ];
 
-        // $response = PaymentService::createOrder($orderInfo);
-        $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo['Request']);
-        
-        dd($response);
+        $response = Http::post('http://api.kbzpay.com/web/gateway/uat/queryCustInfo', $orderInfo);
+ 
         return response()->json([
             'status' => 200,
             'message' => 'successfully',
             'data' => [
-                'result' => $response['Response']['result'] ?? null,
-                'prepay_id' => $response['Response']['prepay_id'] ?? null,
-                'orderInfo' => json_encode($orderInfo),
-                'sign' => $sign,
-                'signType' => $response['Response']['sign_type'] ?? null
+                'response' => $response ?? null,
             ]
         ], 200);
     }
