@@ -13,6 +13,9 @@ class PaymentHistory extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'member_id',
         'kpay_member_id',

@@ -21,7 +21,8 @@ use App\Utilities\EncryptionHelper;
 use App\Utilities\GeneralHelper;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Exception;
 
 class PaymentHistoryController extends Controller
 {
@@ -41,8 +42,8 @@ class PaymentHistoryController extends Controller
                 $paymentHistory->route_id = $paymentHistory->route_id ? Routes::find($paymentHistory->route_id)->name : "Unknown";
                 $paymentHistory->payment_id = $paymentHistory->payment_id ? Payment::find($paymentHistory->payment_id)->name : "Unknown";
 
-                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
-                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
+                $$paymentHistory->starting_point2 = $$paymentHistory->starting_point ? Counter::find($$paymentHistory->starting_point)->name : "Unknown";
+                $$paymentHistory->ending_point2 = $$paymentHistory->ending_point ? Counter::find($$paymentHistory->ending_point)->name : "Unknown";
 
 
                 $paymentHistory->created_by = $paymentHistory->created_by ? User::find($paymentHistory->created_by)->name : "Unknown";
@@ -244,7 +245,7 @@ class PaymentHistoryController extends Controller
         }
     }
 
-    public function confirm($id) 
+    public function confirm($id)
     {
         DB::beginTransaction();
         try {
@@ -254,13 +255,16 @@ class PaymentHistoryController extends Controller
 
             DB::commit();
             return $this->success('Payment history status updated to SUCCESS', $paymentHistory);
+        } catch (ModelNotFoundException $e) {
+            DB::rollback();
+            return $this->notFound('Payment history not found.');
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();
         }
     }
 
-    public function reject($id) 
+    public function reject($id)
     {
         DB::beginTransaction();
         try {
@@ -270,6 +274,9 @@ class PaymentHistoryController extends Controller
 
             DB::commit();
             return $this->success('Payment history status updated to REJECT', $paymentHistory);
+        } catch (ModelNotFoundException $e) {
+            DB::rollback();
+            return $this->notFound('Payment history not found.');
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();
@@ -288,7 +295,7 @@ class PaymentHistoryController extends Controller
             'merch_code' => config('payment.merchant_code'),
             'method' => config('payment.method'),
             'nonce_str' => $nonceStr,
-            'resource_type' => 'POENID',
+            'resource_type' => 'OPENID',
             'timestamp' => $timestamp,
             'trade_type' => config('payment.trade_type'),
             'version' => config('payment.version'),
@@ -315,15 +322,21 @@ class PaymentHistoryController extends Controller
             ]
         ];
 
-        $response = Http::post('http://api.kbzpay.com/web/gateway/uat/queryCustInfo', $orderInfo);
- 
+        // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
+        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
+        $responseData = $response->json();
+        $openID = $responseData['Response']['customer_info']['openID'] ?? null;
+    
         return response()->json([
             'status' => 200,
-            'message' => 'successfully',
+            'message' => 'Successfully',
             'data' => [
-                'response' => $response ?? null,
+                'orderInfo' => $orderInfo,
+                'response' => $responseData,
+                'openID' => $openID
             ]
         ], 200);
+        
     }
 
     public function showKpayMemberTicket($id)
