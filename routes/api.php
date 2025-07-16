@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PaymentHistoryController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\VehiclesTypeController;
 use App\Http\Controllers\WebAuthController;
@@ -32,6 +33,7 @@ Route::post('/forget-password', [PasswordResetController::class, 'forgetPassword
 Route::get('/reset-password', [PasswordResetController::class, 'resetPasswordPage'])->middleware('guest');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('guest');
 
+
 Route::get('/payments', [PaymentController::class, 'index']);
 Route::get('/counters', [CounterController::class, 'index']);
 Route::get('/route', [RoutesController::class, 'index_for_web']);
@@ -40,6 +42,23 @@ Route::get('/profiles', [WebAuthController::class, 'userProfile']);
 Route::get('/memberProfile/{id}', [DashboardController::class, 'memberProfile']);
 Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
 Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
+Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
+Route::post('/paymentHistory4', [PaymentHistoryController::class, 'store3']);
+Route::get('/myticket/{id}', [PaymentHistoryController::class, 'showKpayMemberTicket']);
+Route::post('/auth/get-user-info', [PaymentHistoryController::class, 'authGetUserInfo']);
+Route::get('members/{id}', [MemberController::class, 'show']);
+
+// Route::post('/payment/create-order', [PaymentHistoryController::class, 'createOrder']);
+
+Route::get('contact/', [ContactController::class, 'index']);
+Route::post('contact/', [ContactController::class, 'store']);
+Route::get('contact/{id}', [ContactController::class, 'show']);
+Route::post('contact/{id}', [ContactController::class, 'update']);
+Route::delete('contact/{id}', [ContactController::class, 'destroy']);        
+
+Route::get('cancleTicket/{id}', [DashboardController::class, 'cancleTicket']); 
+
+
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -50,6 +69,8 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::middleware('jwt')->group(function () {
 
+    Route::get('/dashboard/top-agents', [DashboardController::class, 'topAgents']);
+    Route::get('/dashboard/payment-stats', [DashboardController::class, 'paymentStats']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -143,6 +164,22 @@ Route::middleware('jwt')->group(function () {
         Route::post('/{id}', [PaymentHistoryController::class, 'update'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
         Route::delete('/{id}', [PaymentHistoryController::class, 'destroy'])->permission(PermissionEnum::PAYMENT_HISTORY_DESTROY->value);
     });
+
+    Route::group(['prefix' => 'routes'], function () {
+        Route::get('/', [RoutesController::class, 'index'])->permission(PermissionEnum::ROUTES_INDEX->value);
+        Route::post('/', [RoutesController::class, 'store'])->permission(PermissionEnum::ROUTES_STORE->value);
+        Route::get('/{id}', [RoutesController::class, 'show'])->permission(PermissionEnum::ROUTES_SHOW->value);
+        Route::post('/{id}', [RoutesController::class, 'update'])->permission(PermissionEnum::ROUTES_UPDATE->value);
+        Route::delete('/{id}', [RoutesController::class, 'destroy'])->permission(PermissionEnum::ROUTES_DESTROY->value);        
+    });
+
+    // Route::group(['prefix' => 'contact'], function () {
+    //     Route::get('/', [ContactController::class, 'index']);
+    //     Route::post('/', [ContactController::class, 'store']);
+    //     Route::get('/{id}', [ContactController::class, 'show']);
+    //     Route::post('/{id}', [ContactController::class, 'update']);
+    //     Route::delete('/{id}', [ContactController::class, 'destroy']);        
+    // });
 
     Route::group(['prefix' => 'dailyRoute'], function () {
         Route::get('/', [DailyRouteController::class, 'index']);

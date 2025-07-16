@@ -28,11 +28,13 @@ class Contact extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            $userId = auth()->check() ? auth()->user()->id : 1;
+        
             if (!$model->isDirty('created_by')) {
-                $model->created_by = auth()->user()->id;
+                $model->created_by = $userId;
             }
             if (!$model->isDirty('updated_by')) {
-                $model->updated_by = auth()->user()->id;
+                $model->updated_by = $userId;
             }
         });
 

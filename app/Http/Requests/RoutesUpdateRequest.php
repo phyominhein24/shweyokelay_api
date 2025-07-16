@@ -36,7 +36,7 @@ class RoutesUpdateRequest extends FormRequest
         $routesId = $routes->id;
 
         return [
-            'name' => "required|string| unique:routes,name,$routesId| max:24 | min:1",
+            'name' => "required|string| max:1000 | min:1",
 
             'distance' => 'string| nullable',
             'duration' => 'string| nullable',
@@ -48,8 +48,8 @@ class RoutesUpdateRequest extends FormRequest
             'fprice' => 'string| required',
             'last_min' => 'string| required',
             'cancle_booking' => 'string| required',
-            'departure' => 'timestamp| required',
-            'arrivals' => 'timestamp| required',
+            'departure' => 'required',
+            'arrivals' => 'required',
 
             'starting_point' => "required|in:$counters",
             'ending_point' => "required|in:$counters|different:starting_point",

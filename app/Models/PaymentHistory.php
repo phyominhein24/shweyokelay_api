@@ -6,14 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 
 class PaymentHistory extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'member_id',
+        'kpay_member_id',
         'route_id',
         'payment_id',
         'screenshot',
@@ -22,8 +27,10 @@ class PaymentHistory extends Model
         'seat',
         'total',
         'note',
+        'name',
         'start_time',
         'status',
+        'daily_route_id'
     ];
 
     protected $casts = [
@@ -46,11 +53,19 @@ class PaymentHistory extends Model
             if (!$model->isDirty('updated_by')) {
                 $model->updated_by = $userId;
             }
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
+            if (empty($model->prepay_id)) {
+                $model->prepay_id = (string) Str::uuid();
+            }
         });
 
         static::updating(function ($model) {
+            $userId = auth()->check() ? auth()->user()->id : 1;
+            
             if (!$model->isDirty('updated_by')) {
-                $model->updated_by = auth()->user()->id;
+                $model->updated_by = $userId;
             }
         });
     }

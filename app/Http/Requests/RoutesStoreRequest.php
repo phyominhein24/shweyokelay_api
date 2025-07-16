@@ -32,7 +32,7 @@ class RoutesStoreRequest extends FormRequest
         $enum = implode(',', (new Enum(GeneralStatusEnum::class))->values());
 
         return [
-            'name' => 'required|string| unique:routes,name| max:24 | min:4',
+            'name' => 'required|string| max:1000 | min:4',
 
             'distance' => 'string| required',
             'duration' => 'string| required',

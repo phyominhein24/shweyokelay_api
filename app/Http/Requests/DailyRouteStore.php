@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Helpers\Enum;
+use App\Models\Routes;
+use App\Enums\GeneralStatusEnum;
 
 class DailyRouteStore extends FormRequest
 {
@@ -29,6 +32,7 @@ class DailyRouteStore extends FormRequest
             'driver_name' => 'string| nullable| max:1000',
             'car_no' => 'string| nullable| max:1000',
             'route_id' => "required|in:$routes",
+            'start_date' => 'timestamp| required',
             'status' => "required|in:$enum"
         ];
     }

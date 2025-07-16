@@ -16,6 +16,7 @@ class DailyRoute extends Model
         'driver_name',
         'car_no',
         'status',
+        'start_date'
     ];
 
     protected $casts = [
@@ -49,5 +50,10 @@ class DailyRoute extends Model
     public function route(): BelongsTo
     {
         return $this->belongsTo(Routes::class, 'route_id');
+    }
+
+    public function paymentHistories()
+    {
+        return $this->hasMany(PaymentHistory::class);
     }
 }

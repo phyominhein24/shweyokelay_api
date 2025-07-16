@@ -6,12 +6,10 @@ use App\Models\Shop;
 use App\Models\Member;
 use App\Models\PaymentHistory;
 use App\Enums\OrderStatusEnum;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use App\Models\Counter;
-// use App\Models\Cashier;
-// use App\Models\Item;
-// use App\Models\Material;
-// use App\Models\Customer;
-// use App\Models\Category;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -53,6 +51,75 @@ class DashboardController extends Controller
         } catch (Exception $e) {
             return response()->json(['error' => 'An error occurred while fetching dashboard data'], 500);
         }
+    }
+
+    public function paymentStats(Request $request)
+    {
+        $query = PaymentHistory::where('status', OrderStatusEnum::SUCCESS->value);
+    
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        }
+    
+        $now = Carbon::now();
+    
+        $today = (clone $query)->whereDate('created_at', $now->toDateString())->count();
+        $week = (clone $query)->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count();
+        $month = (clone $query)->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count();
+        $year = (clone $query)->whereYear('created_at', $now->year)->count();
+    
+        $trend = (clone $query)
+            ->whereDate('created_at', '>=', $now->copy()->subDays(6))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('created_at')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->get()
+            ->mapWithKeys(fn ($item) => [Carbon::parse($item->date)->format('Y-m-d') => $item->count]);
+    
+        $fullTrend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $day = $now->copy()->subDays($i)->format('Y-m-d');
+            $fullTrend[$day] = $trend[$day] ?? 0;
+        }
+    
+        return response()->json([
+            'status' => 200,
+            'message' => 'Dashboard data fetched successfully',
+            'data' => [
+                'today' => $today,
+                'week' => $week,
+                'month' => $month,
+                'year' => $year,
+                'trend' => $fullTrend,
+            ]
+        ], 200);
+    }
+
+    public function topAgents()
+    {
+        $topAgents = DB::table('payment_histories')
+            ->join('members', 'payment_histories.member_id', '=', 'members.id')
+            ->select(
+                'members.id',
+                'members.name',
+                'members.phone',
+                DB::raw('SUM(payment_histories.total) as total_sales')
+            )
+            ->where('members.is_agent', true)
+            ->where('payment_histories.status', OrderStatusEnum::SUCCESS->value)
+            ->groupBy('members.id', 'members.name', 'members.phone')
+            ->orderByDesc('total_sales')
+            ->limit(10)
+            ->get();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Dashboard data fetched successfully',
+                'data' => $topAgents
+            ], 200);
     }
 
     public function memberProfile($id)
@@ -102,5 +169,22 @@ class DashboardController extends Controller
                 'reject' => $reject
             ]
         ]);
+    }
+
+    public function cancleTicket($id)
+    {
+        
+        DB::beginTransaction();
+        try {
+            $paymentHistory = PaymentHistory::findOrFail($id);
+            $paymentHistory->status = OrderStatusEnum::CANCLE;
+            $paymentHistory->save();
+
+            DB::commit();
+            return $this->success('Payment history status updated to CANCLE', $paymentHistory);
+        } catch (Exception $e) {
+            DB::rollback();
+            return $this->internalServerError();
+        }
     }
 }

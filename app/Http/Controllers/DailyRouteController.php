@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\DailyRouteStoreRequest;
-use App\Http\Requests\DailyRouteUpdateRequest;
+use App\Http\Requests\DailyRouteStore;
+use App\Http\Requests\DailyRouteUpdate;
 use App\Models\DailyRoute;
+use App\Models\VehiclesType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,7 @@ class DailyRouteController extends Controller
         }
     }
 
-    public function store(DailyRouteStoreRequest $request)
+    public function store(DailyRouteStore $request)
     {
         DB::beginTransaction();
         $payload = collect($request->validated());
@@ -54,16 +55,16 @@ class DailyRouteController extends Controller
     {
         DB::beginTransaction();
         try {
-            $dailyRoute = DailyRoute::findOrFail($id);
+            $dailyRoute = DailyRoute::with(['route','route.vehicles_type','paymentHistories',])->findOrFail($id);
             DB::commit();
-            return $this->success('dailyRoute retrived successfully by id', $dailyRoute);
+            return $this->success('dailyRoute retrieved successfully by id', $dailyRoute);
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();
         }
     }
 
-    public function update(DailyRouteUpdateRequest $request, $id)
+    public function update(DailyRouteUpdate $request, $id)
     {
         DB::beginTransaction();
         $payload = collect($request->validated());

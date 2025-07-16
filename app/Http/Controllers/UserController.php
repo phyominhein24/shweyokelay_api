@@ -194,8 +194,12 @@ class UserController extends Controller
                 $payload['image'] = $image_url;
             }
 
-            if($request->input('role_names')){
-                $user->assignRole($request->input('role_names'));
+            // if($request->input('role_names')){
+            //     $user->assignRole($request->input('role_names'));
+            // }
+
+            if ($request->input('role_names')) {
+                $user->syncRoles([$request->input('role_names')]);
             }
 
             $user->update($payload->toArray());
