@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\Routes;
 use App\Models\VehiclesType;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
