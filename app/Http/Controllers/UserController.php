@@ -44,7 +44,7 @@ class UserController extends Controller
             . "&version=" . $version;
 
         $stringSignuser = $usertoken . "&key=" . $appkey;
-
+  
         // Create SHA256 signature
         $signtoken = strtoupper(hash('sha256', $stringSignuser));
 
@@ -68,6 +68,8 @@ class UserController extends Controller
                 ]
             ]
         ];
+
+        // dd($usertoken);
 
         // Make the HTTP request to the external API
         $response = Http::withOptions([

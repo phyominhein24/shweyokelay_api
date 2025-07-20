@@ -28,7 +28,9 @@ class PaymentHistoryController extends Controller
 {
     public function index(Request $request)
     {
+        
         DB::beginTransaction();
+        
         try {
             $paymentHistorys = PaymentHistory::sortingQuery()
                 ->with(['route','member'])
@@ -42,9 +44,13 @@ class PaymentHistoryController extends Controller
                 $paymentHistory->route_id = $paymentHistory->route_id ? Routes::find($paymentHistory->route_id)->name : "Unknown";
                 $paymentHistory->payment_id = $paymentHistory->payment_id ? Payment::find($paymentHistory->payment_id)->name : "Unknown";
 
-                $$paymentHistory->starting_point2 = $$paymentHistory->starting_point ? Counter::find($$paymentHistory->starting_point)->name : "Unknown";
-                $$paymentHistory->ending_point2 = $$paymentHistory->ending_point ? Counter::find($$paymentHistory->ending_point)->name : "Unknown";
+                $paymentHistory->starting_point2 = $paymentHistory->route->starting_point
+                    ? Counter::find($paymentHistory->route->starting_point)?->name
+                    : "Unknown";
 
+                $paymentHistory->ending_point2 = $paymentHistory->route->ending_point
+                    ? Counter::find($paymentHistory->route->ending_point)?->name
+                    : "Unknown";
 
                 $paymentHistory->created_by = $paymentHistory->created_by ? User::find($paymentHistory->created_by)->name : "Unknown";
                 $paymentHistory->updated_by = $paymentHistory->updated_by ? User::find($paymentHistory->updated_by)->name : "Unknown";
@@ -232,7 +238,7 @@ class PaymentHistoryController extends Controller
             }
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
-            $payloadArray['status'] = OrderStatusEnum::SUCCESS;
+            // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
             $paymentHistory = PaymentHistory::create($payloadArray);
             // $paymentHistory->status = OrderStatusEnum::SUCCESS;
             // $paymentHistory->save();
@@ -301,7 +307,7 @@ class PaymentHistoryController extends Controller
             'version' => config('payment.version'),
             'key' => config('payment.secret_key')
         ];
-
+        
         $sign = EncryptionHelper::getSignForOrderInfo2($signParams);
 
         $orderInfo = [

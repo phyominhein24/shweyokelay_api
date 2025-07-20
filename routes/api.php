@@ -142,7 +142,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::group(['prefix' => 'paymentHistory'], function () {
-        Route::get('/', [PaymentHistoryController::class, 'index'])->permission(PermissionEnum::PAYMENT_HISTORY_INDEX->value);
+        Route::get('/', [PaymentHistoryController::class, 'index']);
         Route::post('/', [PaymentHistoryController::class, 'store'])->permission(PermissionEnum::PAYMENT_HISTORY_STORE->value);
         Route::get('/confirm/{id}', [PaymentHistoryController::class, 'confirm'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
         Route::get('/reject/{id}', [PaymentHistoryController::class, 'reject'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
