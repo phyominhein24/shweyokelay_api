@@ -11,6 +11,7 @@ use App\Enums\OrderStatusEnum;
 use App\Models\PaymentHistory;
 use App\Models\VehiclesType;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
