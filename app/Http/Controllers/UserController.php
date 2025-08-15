@@ -69,10 +69,11 @@ class UserController extends Controller
             ]
         ];
 
+        // uat was removed for production in https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo
         // Make the HTTP request to the external API
         $response = Http::withOptions([
             'verify' => false, // Disable SSL verification
-        ])->post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', [
+        ])->post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', [
             'data' => [
                 "Request" => [
                     "method" => "kbz.payment.queryCustInfo",

@@ -322,9 +322,9 @@ class PaymentHistoryController extends Controller
                 'sign_type' => config('payment.sign_type'),
             ]
         ];
-
-        // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
-        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
+        
+        // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
+        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', $orderInfo); // for production
         $responseData = $response->json();
         $openID = $responseData['Response']['customer_info']['openID'] ?? null;
     
