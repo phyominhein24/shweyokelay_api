@@ -173,7 +173,8 @@ class PaymentHistoryController extends Controller
 
             // dd($orderInfo['Request']);
     
-            $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo);
+            // $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo); // for uat
+            $response = Http::post('http://api.kbzpay.com/payment/gateway/precreate', $orderInfo); // for production
 
             $signParams2 = [
                 'appid' => config('payment.appid'),
