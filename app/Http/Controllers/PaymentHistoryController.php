@@ -324,7 +324,7 @@ class PaymentHistoryController extends Controller
         ];
         
         // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
-        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', $orderInfo); // for production
+        $response = Http::post('https://api.kbzpay.com/web/gateway/queryCustInfo', $orderInfo); // for production
         $responseData = $response->json();
         $openID = $responseData['Response']['customer_info']['openID'] ?? null;
     
