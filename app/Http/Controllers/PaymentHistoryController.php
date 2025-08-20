@@ -416,15 +416,16 @@ class PaymentHistoryController extends Controller
 
     public function sylCounterSale(PaymentHistoryStoreForAdminRequest $request)
     {
+        // return $request;
         DB::beginTransaction();
         $payload = collect($request->validated());
-      
-        try {
-            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
+        try {
+            $startDate = Carbon::parse($payload->get('start_date'))->toDateString();
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
                 ->whereDate('start_date', $startDate)
                 ->first();
+            // dd($dailyRoute);
 
             if (!$dailyRoute) {
                 $dailyRoute = DailyRoute::create([
@@ -435,6 +436,7 @@ class PaymentHistoryController extends Controller
 
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
+            $payloadArray['start_time'] = $payload->get('start_date');
             $payloadArray['status'] = "SUCCESS";
 
             $paymentHistory = PaymentHistory::create($payloadArray);
@@ -446,6 +448,6 @@ class PaymentHistoryController extends Controller
             Log::error("Store Payment History error: " . $e->getMessage());
             DB::rollback();
             return $this->internalServerError();
-        }   
+        }
     }
 }

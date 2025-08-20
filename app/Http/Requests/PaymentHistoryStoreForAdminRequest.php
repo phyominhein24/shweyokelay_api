@@ -44,7 +44,7 @@ class PaymentHistoryStoreForAdminRequest extends FormRequest
             'seat' => 'nullable| json',
             'total' => 'numeric',
             'note' => 'string| nullable',
-            'start_time' => 'nullable',
+            'start_date' => 'nullable',
             'member_id' => "nullable|in:$members",
             'kpay_member_id' => 'nullable',
             'route_id' => "required|in:$routes",
