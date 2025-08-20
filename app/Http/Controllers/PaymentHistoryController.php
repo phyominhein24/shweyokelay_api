@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PaymentHistoryStoreRequest;
 use App\Http\Requests\PaymentHistoryUpdateRequest;
+use App\Http\Requests\PaymentHistoryStoreForAdminRequest;
 use App\Enums\OrderStatusEnum;
 use App\Models\PaymentHistory;
 use App\Models\User;
@@ -413,10 +414,11 @@ class PaymentHistoryController extends Controller
         }
     }
 
-    public function sylCounterSale(PaymentHistoryStoreRequest $request)
+    public function sylCounterSale(PaymentHistoryStoreForAdminRequest $request)
     {
         DB::beginTransaction();
         $payload = collect($request->validated());
+      
         try {
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
