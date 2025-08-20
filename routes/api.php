@@ -44,6 +44,7 @@ Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
 Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
 Route::post('/paymentHistory4', [PaymentHistoryController::class, 'store3']);
+Route::post('/sylCounterSale', [PaymentHistoryController::class, 'sylCounterSale']);
 Route::get('/myticket/{id}', [PaymentHistoryController::class, 'showKpayMemberTicket']);
 Route::post('/auth/get-user-info', [PaymentHistoryController::class, 'authGetUserInfo']);
 Route::get('members/{id}', [MemberController::class, 'show']);
@@ -54,9 +55,9 @@ Route::get('contact/', [ContactController::class, 'index']);
 Route::post('contact/', [ContactController::class, 'store']);
 Route::get('contact/{id}', [ContactController::class, 'show']);
 Route::post('contact/{id}', [ContactController::class, 'update']);
-Route::delete('contact/{id}', [ContactController::class, 'destroy']);        
+Route::delete('contact/{id}', [ContactController::class, 'destroy']);
 
-Route::get('cancleTicket/{id}', [DashboardController::class, 'cancleTicket']); 
+Route::get('cancleTicket/{id}', [DashboardController::class, 'cancleTicket']);
 
 
 
@@ -144,7 +145,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [PaymentController::class, 'store']);
         Route::get('/{id}', [PaymentController::class, 'show']);
         Route::post('/{id}', [PaymentController::class, 'update']);
-        Route::delete('/{id}', [PaymentController::class, 'destroy']);        
+        Route::delete('/{id}', [PaymentController::class, 'destroy']);
     });
 
     Route::group(['prefix' => 'routes'], function () {
@@ -156,7 +157,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::group(['prefix' => 'paymentHistory'], function () {
-        Route::get('/', [PaymentHistoryController::class, 'index'])->permission(PermissionEnum::PAYMENT_HISTORY_INDEX->value);
+        Route::get('/', [PaymentHistoryController::class, 'index']);
         Route::post('/', [PaymentHistoryController::class, 'store'])->permission(PermissionEnum::PAYMENT_HISTORY_STORE->value);
         Route::get('/confirm/{id}', [PaymentHistoryController::class, 'confirm'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
         Route::get('/reject/{id}', [PaymentHistoryController::class, 'reject'])->permission(PermissionEnum::PAYMENT_HISTORY_UPDATE->value);
@@ -170,7 +171,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [RoutesController::class, 'store'])->permission(PermissionEnum::ROUTES_STORE->value);
         Route::get('/{id}', [RoutesController::class, 'show'])->permission(PermissionEnum::ROUTES_SHOW->value);
         Route::post('/{id}', [RoutesController::class, 'update'])->permission(PermissionEnum::ROUTES_UPDATE->value);
-        Route::delete('/{id}', [RoutesController::class, 'destroy'])->permission(PermissionEnum::ROUTES_DESTROY->value);        
+        Route::delete('/{id}', [RoutesController::class, 'destroy'])->permission(PermissionEnum::ROUTES_DESTROY->value);
     });
 
     // Route::group(['prefix' => 'contact'], function () {
@@ -186,7 +187,7 @@ Route::middleware('jwt')->group(function () {
         Route::post('/', [DailyRouteController::class, 'store'])->permission(PermissionEnum::DAILY_ROUTE_STORE->value);
         Route::get('/{id}', [DailyRouteController::class, 'show']);
         Route::post('/{id}', [DailyRouteController::class, 'update'])->permission(PermissionEnum::DAILY_ROUTE_UPDATE->value);
-        Route::delete('/{id}', [DailyRouteController::class, 'destroy'])->permission(PermissionEnum::DAILY_ROUTE_DESTROY->value);        
+        Route::delete('/{id}', [DailyRouteController::class, 'destroy'])->permission(PermissionEnum::DAILY_ROUTE_DESTROY->value);
     });
 
     Route::group(['prefix' => 'dashboard'], function () {

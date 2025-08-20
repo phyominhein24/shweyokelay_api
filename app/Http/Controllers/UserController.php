@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -44,7 +45,7 @@ class UserController extends Controller
             . "&version=" . $version;
 
         $stringSignuser = $usertoken . "&key=" . $appkey;
-
+  
         // Create SHA256 signature
         $signtoken = strtoupper(hash('sha256', $stringSignuser));
 
