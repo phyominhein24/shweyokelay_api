@@ -6,6 +6,7 @@ use App\Http\Requests\CounterStoreRequest;
 use App\Http\Requests\CounterUpdateRequest;
 use App\Models\Counter;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
