@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -69,12 +70,11 @@ class UserController extends Controller
             ]
         ];
 
-        // dd($usertoken);
-
+        // uat was removed for production in https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo
         // Make the HTTP request to the external API
         $response = Http::withOptions([
             'verify' => false, // Disable SSL verification
-        ])->post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', [
+        ])->post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', [
             'data' => [
                 "Request" => [
                     "method" => "kbz.payment.queryCustInfo",

@@ -8,12 +8,14 @@ use App\Models\Counter;
 use App\Models\Routes;
 use App\Models\User;
 use App\Enums\OrderStatusEnum;
+use App\Enums\GeneralStatusEnum;
 use App\Models\PaymentHistory;
 use App\Models\VehiclesType;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RoutesController extends Controller
 {
@@ -72,41 +74,34 @@ class RoutesController extends Controller
 
     public function index_for_web(Request $request)
     {
+
         DB::beginTransaction();
         try {
             $startingPoint = $request->input('starting_point');
             $endingPoint = $request->input('ending_point');
             $selectedDate = $request->input('selected_date');
-            $now = Carbon::now()->format('Y-m-d H:i:s');
-            
+            $now = Carbon::now()->format('H:i'); // time only
+
             $routess = Routes::query()
-                ->when($startingPoint, function ($query, $startingPoint) {
-                    return $query->where('starting_point', $startingPoint);
-                })
-                ->when($endingPoint, function ($query, $endingPoint) {
-                    return $query->where('ending_point', $endingPoint);
-                })
-                ->when($selectedDate, function ($query, $selectedDate) {
+                ->where('status', GeneralStatusEnum::ACTIVE->value)
+                ->when($startingPoint, fn($q, $sp) => $q->where('starting_point', $sp))
+                ->when($endingPoint, fn($q, $ep) => $q->where('ending_point', $ep))
+                ->when($selectedDate, function ($q, $selectedDate) {
                     $parsedDate = Carbon::parse($selectedDate);
                     $dayOfWeek = $parsedDate->format('l');
-                    return $query->whereJsonContains('day_off', $dayOfWeek);
+                    return $q->whereJsonContains('day_off', $dayOfWeek);
                 })
-                // ->whereNotBetween(DB::raw("'$now'"), [
-                //     DB::raw("datetime(departure, '-' || last_min || ' minutes')"),
-                //     DB::raw("departure")
-                // ])
-                ->whereNotBetween(DB::raw("'$now'"), [
-                    DB::raw("strftime('%H:%M', departure, '-' || last_min || ' minutes')"),
-                    DB::raw("strftime('%H:%M', departure)")
-                ])
+                ->whereRaw(
+                    "? NOT BETWEEN strftime('%H:%M', departure, '-' || last_min || ' minutes') AND strftime('%H:%M', departure)",
+                    [$now]
+                )
                 ->with(['vehicles_type'])
                 ->sortingQuery()
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
                 ->paginationQuery();
-
-            DB::commit();
+            // ->get();
 
             $routess->transform(function ($routes) use ($selectedDate) {
                 $routes->orders = PaymentHistory::where('route_id', $routes->id)
@@ -116,19 +111,29 @@ class RoutesController extends Controller
                 $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
                 $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
-    
+
                 $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
                 $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
                 $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
+
+                $departure = Carbon::parse($routes->departure);
+                $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
+                $end   = $departure->format('H:i');
+
+                $routes->between_start = $start;
+                $routes->between_end   = $end;
                 return $routes;
             });
 
             DB::commit();
+
             return $this->success('Routes retrieved successfully', [
-                'routes' => $routess
+                'routes' => $routess,
+                'current_time' => $now
             ]);
         } catch (Exception $e) {
             DB::rollback();
+            Log::error($e);
             return $this->internalServerError();
         }
     }
