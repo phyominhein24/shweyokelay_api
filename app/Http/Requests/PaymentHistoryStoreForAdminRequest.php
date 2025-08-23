@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\Payment;
 use App\Models\Routes;
 use App\Models\DailyRoute;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PaymentHistoryStoreForAdminRequest extends FormRequest
@@ -29,6 +30,8 @@ class PaymentHistoryStoreForAdminRequest extends FormRequest
     {
         $members = Member::all()->pluck('id')->toArray();
         $members = implode(',', $members);
+        $users = User::all()->pluck('id')->toArray();
+        $users = implode(',', $users);
         $payments = Payment::all()->pluck('id')->toArray();
         $payments = implode(',', $payments);
         $dailyRoute = DailyRoute::all()->pluck('id')->toArray();
@@ -46,6 +49,7 @@ class PaymentHistoryStoreForAdminRequest extends FormRequest
             'note' => 'string| nullable',
             'start_date' => 'nullable',
             'member_id' => "nullable|in:$members",
+            'user_id' => "nullable|in:$users",
             'kpay_member_id' => 'nullable',
             'route_id' => "required|in:$routes",
             'screenshot' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

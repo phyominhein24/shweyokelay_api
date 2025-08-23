@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Counter;
 use Carbon\Carbon;
+use App\Models\User;
+use Exception;
 
 class DashboardController extends Controller
 {
@@ -47,7 +49,7 @@ class DashboardController extends Controller
                 // ['name'=> 'Shop', 'count' => Shop::count()],
             ];
 
-            return $this->success('datas retrived successfully',['chart_data' => $chartData, 'total_data' => $totalData]);
+            return $this->success('datas retrived successfully', ['chart_data' => $chartData, 'total_data' => $totalData]);
         } catch (Exception $e) {
             return response()->json(['error' => 'An error occurred while fetching dashboard data'], 500);
         }
@@ -56,35 +58,35 @@ class DashboardController extends Controller
     public function paymentStats(Request $request)
     {
         $query = PaymentHistory::where('status', OrderStatusEnum::SUCCESS->value);
-    
+
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('created_at', [
                 Carbon::parse($request->start_date)->startOfDay(),
                 Carbon::parse($request->end_date)->endOfDay()
             ]);
         }
-    
+
         $now = Carbon::now();
-    
+
         $today = (clone $query)->whereDate('created_at', $now->toDateString())->count();
         $week = (clone $query)->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()])->count();
         $month = (clone $query)->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count();
         $year = (clone $query)->whereYear('created_at', $now->year)->count();
-    
+
         $trend = (clone $query)
             ->whereDate('created_at', '>=', $now->copy()->subDays(6))
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('created_at')
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->get()
-            ->mapWithKeys(fn ($item) => [Carbon::parse($item->date)->format('Y-m-d') => $item->count]);
-    
+            ->mapWithKeys(fn($item) => [Carbon::parse($item->date)->format('Y-m-d') => $item->count]);
+
         $fullTrend = [];
         for ($i = 6; $i >= 0; $i--) {
             $day = $now->copy()->subDays($i)->format('Y-m-d');
             $fullTrend[$day] = $trend[$day] ?? 0;
         }
-    
+
         return response()->json([
             'status' => 200,
             'message' => 'Dashboard data fetched successfully',
@@ -115,11 +117,11 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-            return response()->json([
-                'status' => 200,
-                'message' => 'Dashboard data fetched successfully',
-                'data' => $topAgents
-            ], 200);
+        return response()->json([
+            'status' => 200,
+            'message' => 'Dashboard data fetched successfully',
+            'data' => $topAgents
+        ], 200);
     }
 
     public function memberProfile($id)
@@ -143,12 +145,13 @@ class DashboardController extends Controller
             ->count();
 
         $paymentHistory = PaymentHistory::where('member_id', $id)
-            ->with(['route'])
+            ->with(['route', 'route.vehicles_type'])
             ->get();
-        
+        $totalRecords = $paymentHistory->count();
+
         $paymentHistory->transform(function ($payment) {
             // Check if route exists before accessing it
-          
+
             if ($payment->route) {
                 $startingCounter = Counter::find($payment->route->starting_point);
                 $endingCounter = Counter::find($payment->route->ending_point);
@@ -156,14 +159,17 @@ class DashboardController extends Controller
                 $payment->route->starting_point2 = $startingCounter ? $startingCounter->name : "Unknown";
                 $payment->route->ending_point2 = $endingCounter ? $endingCounter->name : "Unknown";
             }
-        
+
             return $payment;
         });
 
         return response()->json([
             'data' => [
                 'member' => $member,
-                'payment_history' => $paymentHistory,
+                'payment_history' => [
+                    'records' => $paymentHistory,
+                    'totalRecords' => $totalRecords
+                ],
                 'booked' => $booked,
                 'pending' => $pending,
                 'reject' => $reject
@@ -173,7 +179,7 @@ class DashboardController extends Controller
 
     public function cancleTicket($id)
     {
-        
+
         DB::beginTransaction();
         try {
             $paymentHistory = PaymentHistory::findOrFail($id);
@@ -186,5 +192,60 @@ class DashboardController extends Controller
             DB::rollback();
             return $this->internalServerError();
         }
+    }
+
+    public function sylCounterProfile($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'Sale person not found'], 404);
+        }
+
+        $booked = PaymentHistory::where('user_id', $id)
+            ->where('status', OrderStatusEnum::SUCCESS)
+            ->count();
+
+        $pending = PaymentHistory::where('user_id', $id)
+            ->where('status', OrderStatusEnum::PENDING)
+            ->count();
+
+        $reject = PaymentHistory::where('user_id', $id)
+            ->where('status', OrderStatusEnum::REJECT)
+            ->count();
+
+        $paymentHistory = PaymentHistory::where('user_id', $id)
+            ->with(['route', 'route.vehicles_type'])
+            ->orderBy('created_at', 'DESC')
+            ->get();
+        $totalRecords = $paymentHistory->count();
+
+        $paymentHistory->transform(function ($payment) {
+            // Check if route exists before accessing it
+
+            if ($payment->route) {
+                $startingCounter = Counter::find($payment->route->starting_point);
+                $endingCounter = Counter::find($payment->route->ending_point);
+
+                $payment->route->starting_point2 = $startingCounter ? $startingCounter->name : "Unknown";
+                $payment->route->ending_point2 = $endingCounter ? $endingCounter->name : "Unknown";
+            }
+
+            return $payment;
+        });
+        // dd($paymentHistory);
+
+        return response()->json([
+            'data' => [
+                'salesperson' => $user,
+                'payment_history' => [
+                    'records' => $paymentHistory,
+                    'totalRecords' => $totalRecords
+                ],
+                'booked' => $booked,
+                'pending' => $pending,
+                'reject' => $reject
+            ]
+        ]);
     }
 }
