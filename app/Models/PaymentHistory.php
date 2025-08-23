@@ -18,6 +18,7 @@ class PaymentHistory extends Model
 
     protected $fillable = [
         'member_id',
+        'user_id',
         'kpay_member_id',
         'route_id',
         'payment_id',
@@ -46,7 +47,7 @@ class PaymentHistory extends Model
 
         static::creating(function ($model) {
             $userId = auth()->check() ? auth()->user()->id : 1;
-        
+
             if (!$model->isDirty('created_by')) {
                 $model->created_by = $userId;
             }
@@ -63,7 +64,7 @@ class PaymentHistory extends Model
 
         static::updating(function ($model) {
             $userId = auth()->check() ? auth()->user()->id : 1;
-            
+
             if (!$model->isDirty('updated_by')) {
                 $model->updated_by = $userId;
             }
@@ -79,5 +80,4 @@ class PaymentHistory extends Model
     {
         return $this->belongsTo(Routes::class, 'route_id');
     }
-
 }

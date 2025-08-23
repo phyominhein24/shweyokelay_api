@@ -40,6 +40,7 @@ Route::get('/route', [RoutesController::class, 'index_for_web']);
 Route::get('/vehiclesTypes', [VehiclesTypeController::class, 'index']);
 Route::get('/profiles', [WebAuthController::class, 'userProfile']);
 Route::get('/memberProfile/{id}', [DashboardController::class, 'memberProfile']);
+Route::get('/sylCounterProfile/{id}', [DashboardController::class, 'sylCounterProfile']);
 Route::post('/getUserInfo', [UserController::class, 'getUserInfo']);
 Route::post('/paymentHistory2', [PaymentHistoryController::class, 'store']);
 Route::post('/paymentHistory3', [PaymentHistoryController::class, 'store2']);
