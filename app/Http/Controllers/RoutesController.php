@@ -79,22 +79,29 @@ class RoutesController extends Controller
         try {
             $startingPoint = $request->input('starting_point');
             $endingPoint = $request->input('ending_point');
-            $selectedDate = $request->input('selected_date');
-            $now = Carbon::now()->format('H:i'); // time only
+            $now = Carbon::now(); // full datetime
+            $selectedDate = Carbon::parse($request->input('selected_date')); // e.g. 2025-08-24
 
             $routess = Routes::query()
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
                 ->when($startingPoint, fn($q, $sp) => $q->where('starting_point', $sp))
                 ->when($endingPoint, fn($q, $ep) => $q->where('ending_point', $ep))
                 ->when($selectedDate, function ($q, $selectedDate) {
-                    $parsedDate = Carbon::parse($selectedDate);
-                    $dayOfWeek = $parsedDate->format('l');
+                    $dayOfWeek = $selectedDate->format('l');
                     return $q->whereJsonContains('day_off', $dayOfWeek);
                 })
-                ->whereRaw(
-                    "? NOT BETWEEN strftime('%H:%M', departure, '-' || last_min || ' minutes') AND strftime('%H:%M', departure)",
-                    [$now]
-                )
+                ->where(function ($q) use ($now, $selectedDate) {
+                    $q->whereRaw("
+                        ? NOT BETWEEN 
+                        datetime(?, departure, '-' || last_min || ' minutes') 
+                        AND 
+                        datetime(?, departure)
+                    ", [
+                        $now->format('Y-m-d H:i:s'),
+                        $selectedDate->format('Y-m-d'),
+                        $selectedDate->format('Y-m-d'),
+                    ]);
+                })
                 ->with(['vehicles_type'])
                 ->sortingQuery()
                 ->searchQuery()
