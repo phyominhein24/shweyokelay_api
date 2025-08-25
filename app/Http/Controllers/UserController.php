@@ -27,6 +27,8 @@ class UserController extends Controller
         // API Credentials
         $appid = "kpe474a3a5101c7edb1bf8b84ffadb1b";
         $appkey = '#N$w#%#Goen)qrH8zYM#MARqVtLEsqRc';
+        // $appid = "kpfbbfa3098e2602a5359e4ed3ea5485"; // UAT
+        // $appkey = 'cdea1a210e7373a7fd8b01ecd988195c1489ac219405c109a7f5ac68c7534ec3'; // UAT
         $merch_code = "911004501";
         $version = "1.0";
         $method = "kbz.payment.queryCustInfo";
@@ -71,10 +73,11 @@ class UserController extends Controller
         ];
 
         // uat was removed for production in https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo
+        // https://api.kbzpay.com:18443/web/gateway/queryCustInfo // production
         // Make the HTTP request to the external API
         $response = Http::withOptions([
             'verify' => false, // Disable SSL verification
-        ])->post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', [
+        ])->post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', [
             'data' => [
                 "Request" => [
                     "method" => "kbz.payment.queryCustInfo",
@@ -105,7 +108,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
 
-        DB::beginTransaction();
+        DB::beginTransaction();https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo
 
         try {
 

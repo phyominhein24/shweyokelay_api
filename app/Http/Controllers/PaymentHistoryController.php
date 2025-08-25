@@ -203,8 +203,8 @@ class PaymentHistoryController extends Controller
 
             // dd($orderInfo['Request']);
 
-            // $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo); // for uat
-            $response = Http::post('http://api.kbzpay.com/payment/gateway/precreate', $orderInfo); // for production
+            $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo); // for uat
+            // $response = Http::post('https://api.kbzpay.com/payment/gateway/precreate', $orderInfo); // for production
 
             $signParams2 = [
                 'appid' => config('payment.appid'),
@@ -217,8 +217,6 @@ class PaymentHistoryController extends Controller
 
             $sign2 = EncryptionHelper::getSignForOrderInfo($signParams2);
             $sign2String = EncryptionHelper::getSignForOrderInfoString($signParams2);
-
-            // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
 
             // dd($response);
             return response()->json([
@@ -372,8 +370,8 @@ class PaymentHistoryController extends Controller
             ]
         ];
 
-        // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
-        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', $orderInfo); // for production
+        $response = Http::post('http://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
+        // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', $orderInfo); // for production
         $responseData = $response->json();
         $openID = $responseData['Response']['customer_info']['openID'] ?? null;
 
