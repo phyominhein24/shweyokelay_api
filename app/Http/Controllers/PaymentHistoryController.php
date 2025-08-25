@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-
 class PaymentHistoryController extends Controller
 {
     public function index(Request $request)
