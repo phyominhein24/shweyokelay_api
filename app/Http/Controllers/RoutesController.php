@@ -146,6 +146,79 @@ class RoutesController extends Controller
         }
     }
 
+    public function adminRouteSearch(Request $request)
+    {
+
+        DB::beginTransaction();
+        try {
+            $now = Carbon::now(); // full datetime
+            $vehicleType  = $request->input('vehicles_type_id');
+            $selectedDate = Carbon::parse($request->input('selected_date')); // e.g. 2025-08-24
+            $userType  = $request->input('user_type');
+            
+            // $route = Routes::get();
+            // if ($userType === 'local') {
+            //     $price = (int) $route->price;
+            // } else {
+            //     $price = (int) $route->fprice;
+            // }
+            // dd($route);
+
+            $routes = Routes::query()
+                ->where('status', GeneralStatusEnum::ACTIVE->value)
+                ->where('vehicles_type_id', $vehicleType)
+                ->when($selectedDate, function ($q, $selectedDate) {
+                    $dayOfWeek = $selectedDate->format('l');
+                    return $q->whereJsonContains('day_off', $dayOfWeek);
+                })
+                ->where(function ($q) use ($now, $selectedDate) {
+                    $q->whereRaw("
+                        ? NOT BETWEEN 
+                        datetime(?, departure, '-' || last_min || ' minutes') 
+                        AND 
+                        datetime(?, departure)
+                    ", [
+                        $now->format('Y-m-d H:i:s'),
+                        $selectedDate->format('Y-m-d'),
+                        $selectedDate->format('Y-m-d'),
+                    ]);
+                })
+                ->with(['vehicles_type'])
+                ->sortingQuery()
+                ->searchQuery()
+                ->filterQuery()
+                ->filterDateQuery()
+                ->paginationQuery();
+
+          
+
+            $routes->transform(function ($routes) use ($selectedDate) {
+                $routes->orders = PaymentHistory::where('route_id', $routes->id)
+                    ->where('start_time', $selectedDate)
+                    ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
+                    ->get();
+                
+                $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
+                $departure = Carbon::parse($routes->departure);
+                $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
+                $end   = $departure->format('H:i');
+
+                $routes->between_start = $start;
+                $routes->between_end   = $end;
+                return $routes;
+            });
+
+            DB::commit();
+
+            return $this->success('Routes retrieved successfully', [
+                'routes' => $routes,
+                'current_time' => $now
+            ]);
+        } catch (Exception $e) {
+           dd($e->getMessage());
+        }
+    }
+
     public function store(RoutesStoreRequest $request)
     {
         DB::beginTransaction();
