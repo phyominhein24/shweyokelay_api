@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PaymentHistoryStoreRequest;
 use App\Http\Requests\PaymentHistoryUpdateRequest;
+use App\Http\Requests\PaymentHistoryStoreForAdminRequest;
 use App\Enums\OrderStatusEnum;
 use App\Models\PaymentHistory;
 use App\Models\User;
@@ -16,22 +17,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use App\Services\PaymentService;
 use App\Utilities\EncryptionHelper;
 use App\Utilities\GeneralHelper;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Exception;
+
 
 class PaymentHistoryController extends Controller
 {
     public function index(Request $request)
     {
+
         DB::beginTransaction();
+
         try {
             $paymentHistorys = PaymentHistory::sortingQuery()
-                ->with(['route','member'])
+                ->with(['route', 'member'])
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
@@ -42,9 +45,13 @@ class PaymentHistoryController extends Controller
                 $paymentHistory->route_id = $paymentHistory->route_id ? Routes::find($paymentHistory->route_id)->name : "Unknown";
                 $paymentHistory->payment_id = $paymentHistory->payment_id ? Payment::find($paymentHistory->payment_id)->name : "Unknown";
 
-                $$paymentHistory->starting_point2 = $$paymentHistory->starting_point ? Counter::find($$paymentHistory->starting_point)->name : "Unknown";
-                $$paymentHistory->ending_point2 = $$paymentHistory->ending_point ? Counter::find($$paymentHistory->ending_point)->name : "Unknown";
+                $paymentHistory->starting_point2 = $paymentHistory->route->starting_point
+                    ? Counter::find($paymentHistory->route->starting_point)?->name
+                    : "Unknown";
 
+                $paymentHistory->ending_point2 = $paymentHistory->route->ending_point
+                    ? Counter::find($paymentHistory->route->ending_point)?->name
+                    : "Unknown";
 
                 $paymentHistory->created_by = $paymentHistory->created_by ? User::find($paymentHistory->created_by)->name : "Unknown";
                 $paymentHistory->updated_by = $paymentHistory->updated_by ? User::find($paymentHistory->updated_by)->name : "Unknown";
@@ -64,13 +71,13 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         $payload = collect($request->validated());
         try {
-            
+
             if ($request->hasFile('screenshot')) {
                 $path = $request->file('screenshot')->store('public/images');
                 $image_url = Storage::url($path);
                 $payload['screenshot'] = $image_url;
             }
-            
+
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
@@ -83,18 +90,49 @@ class PaymentHistoryController extends Controller
                     'start_date' => $startDate
                 ]);
             }
+            $requestedSeats = collect(json_decode($payload->get('seat'), true))
+                ->pluck('number')
+                ->toArray();
 
+            $existingHistories = PaymentHistory::where('daily_route_id', $dailyRoute->id)->get();
+
+            foreach ($existingHistories as $history) {
+                $existingSeats = collect(json_decode($history->seat, true))
+                    ->pluck('number')
+                    ->toArray();
+
+                $conflicts = array_intersect($requestedSeats, $existingSeats);
+                if (!empty($conflicts)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status'  => 409,
+                        'message' => 'Seat(s) already occupied: ' . implode(',', $conflicts),
+                    ], 409);
+                }
+            }
+
+            // --- ✅ Create payment history ---
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
-
+            $payloadArray['start_time']     = $payload->get('start_time');
             $paymentHistory = PaymentHistory::create($payloadArray);
 
             DB::commit();
 
-            return $this->success('paymentHistory created successfully', $paymentHistory);
+            return response()->json([
+                'status'  => 201,
+                'message' => 'Payment History created successfully',
+                'data'    => $paymentHistory,
+            ], 201);
         } catch (Exception $e) {
+            Log::error("Store Payment History error: " . $e->getMessage());
             DB::rollback();
-            return $this->internalServerError();
+            // return $this->internalServerError();
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Payment History creating unsuccessful!',
+                'error'    => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -103,27 +141,20 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         $payload = collect($request->validated());
         try {
-            
-            // $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
-            // $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-            //     ->whereDate('start_date', $startDate)
-            //     ->first();
 
-            // if (!$dailyRoute) {
-            //     $dailyRoute = DailyRoute::create([
-            //         'route_id' => $payload->get('route_id'),
-            //         'start_date' => $startDate
-            //     ]);
-            // }
-            // $payloadArray = $payload->toArray();
-            // $payloadArray['daily_route_id'] = $dailyRoute->id;
-            // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
-            // $paymentHistory = PaymentHistory::create($payloadArray);
-            // // $paymentHistory->status = OrderStatusEnum::SUCCESS;
-            // // $paymentHistory->save();
-            // DB::commit();
+            $route_id  = $request->input('route_id');
+            $userType  = $request->input('user_type');
+            $totalQty  = $request->input('total');
 
-            $totalAmount = $request->input('total_amount');
+            $route = Routes::findOrFail($route_id);
+
+            if ($userType === 'local') {
+                $price = (int) $route->price;
+            } else {
+                $price = (int) $route->fprice;
+            }
+
+            $totalAmount = $price * (int) $totalQty;
             $timestamp = (string) GeneralHelper::getUnixTimestamp();
             $nonceStr = GeneralHelper::generateRandomString();
             $orderStr = GeneralHelper::generateRandomString();
@@ -136,7 +167,7 @@ class PaymentHistoryController extends Controller
                 'method' => config('payment.method'),
                 'nonce_str' => $nonceStr,
                 'notify_url' => config('payment.notify_url'),
-                'timeout_express'=> '100m',
+                'timeout_express' => '100m',
                 'timestamp' => $timestamp,
                 'title' => 'iPhoneX',
                 'total_amount' => $totalAmount,
@@ -147,7 +178,7 @@ class PaymentHistoryController extends Controller
             ];
 
             $sign = EncryptionHelper::generateSignature($signParams);
-    
+
             $orderInfo = [
                 'Request' => [
                     'timestamp' => $timestamp,
@@ -172,7 +203,7 @@ class PaymentHistoryController extends Controller
             ];
 
             // dd($orderInfo['Request']);
-    
+
             // $response = Http::post('http://api.kbzpay.com/payment/gateway/uat/precreate', $orderInfo); // for uat
             $response = Http::post('http://api.kbzpay.com/payment/gateway/precreate', $orderInfo); // for production
 
@@ -189,7 +220,7 @@ class PaymentHistoryController extends Controller
             $sign2String = EncryptionHelper::getSignForOrderInfoString($signParams2);
 
             // Log::info('POST Request to: http://api.kbzpay.com/payment/gateway/uat/precreate?' . http_build_query($orderInfo['Request']));
-            
+
             // dd($response);
             return response()->json([
                 'status' => 200,
@@ -205,11 +236,12 @@ class PaymentHistoryController extends Controller
                     'signType' => $response['Response']['sign_type'] ?? null
                 ]
             ], 200);
-            
+
 
             // return $this->success('paymentHistory created successfully', $paymentHistory);
         } catch (Exception $e) {
             DB::rollback();
+            Log::error("Store Payment History 2 error: " . $e->getMessage());
             return $this->internalServerError();
         }
     }
@@ -219,7 +251,11 @@ class PaymentHistoryController extends Controller
         DB::beginTransaction();
         $payload = collect($request->validated());
         try {
-            
+
+            $route_id  = $request->input('route_id');
+            $userType  = $request->input('user_type');
+            $totalQty  = $request->input('total');
+
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
                 ->whereDate('start_date', $startDate)
@@ -232,8 +268,21 @@ class PaymentHistoryController extends Controller
                 ]);
             }
             $payloadArray = $payload->toArray();
+
+            $route = Routes::findOrFail($route_id);
+
+            if ($userType === 'local') {
+                $price = (int) $route->price;
+            } else {
+                $price = (int) $route->fprice;
+            }
+
+            $totalAmount = $price * (int) $totalQty;
+
+            $payloadArray['total'] = $totalAmount;
+
             $payloadArray['daily_route_id'] = $dailyRoute->id;
-            $payloadArray['status'] = OrderStatusEnum::SUCCESS;
+            // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
             $paymentHistory = PaymentHistory::create($payloadArray);
             // $paymentHistory->status = OrderStatusEnum::SUCCESS;
             // $paymentHistory->save();
@@ -242,6 +291,7 @@ class PaymentHistoryController extends Controller
             return $this->success('paymentHistory created successfully', $paymentHistory);
         } catch (Exception $e) {
             DB::rollback();
+            Log::error("Store Payment History 3 error: " . $e->getMessage());
             return $this->internalServerError();
         }
     }
@@ -316,18 +366,18 @@ class PaymentHistoryController extends Controller
                     'appid' => config('payment.appid'),
                     'access_token' => $access_token,
                     'trade_type' => config('payment.trade_type'),
-                    'resource_type'=> "OPENID",
+                    'resource_type' => "OPENID",
                 ],
                 'sign' => $sign,
                 'sign_type' => config('payment.sign_type'),
             ]
         ];
-        
+
         // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
         $response = Http::post('https://api.kbzpay.com/web/gateway/queryCustInfo', $orderInfo); // for production
         $responseData = $response->json();
         $openID = $responseData['Response']['customer_info']['openID'] ?? null;
-    
+
         return response()->json([
             'status' => 200,
             'message' => 'Successfully',
@@ -337,7 +387,6 @@ class PaymentHistoryController extends Controller
                 'openID' => $openID
             ]
         ], 200);
-        
     }
 
     public function showKpayMemberTicket($id)
@@ -347,7 +396,7 @@ class PaymentHistoryController extends Controller
             $paymentHistories = PaymentHistory::where('kpay_member_id', $id)->with(['route.vehicles_type'])->get();
 
             $paymentHistories->transform(function ($paymentHistory) {
-                
+
                 $paymentHistory->starting_point = $paymentHistory->route->starting_point ? Counter::find($paymentHistory->route->starting_point)->name : "Unknown";
                 $paymentHistory->ending_point = $paymentHistory->route->ending_point ? Counter::find($paymentHistory->route->ending_point)->name : "Unknown";
 
@@ -401,6 +450,73 @@ class PaymentHistoryController extends Controller
         } catch (Exception $e) {
             DB::rollback();
             return $this->internalServerError();
+        }
+    }
+
+    public function sylCounterSale(PaymentHistoryStoreForAdminRequest $request)
+    {
+        DB::beginTransaction();
+        $payload = collect($request->validated());
+
+        try {
+            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
+
+            $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
+                ->whereDate('start_date', $startDate)
+                ->first();
+
+            if (!$dailyRoute) {
+                $dailyRoute = DailyRoute::create([
+                    'route_id'   => $payload->get('route_id'),
+                    'start_date' => $startDate,
+                ]);
+            }
+
+            // --- ✅ Seat check ---
+            $requestedSeats = collect(json_decode($payload->get('seat'), true))
+                ->pluck('number')
+                ->toArray();
+
+            $existingHistories = PaymentHistory::where('daily_route_id', $dailyRoute->id)->get();
+
+            foreach ($existingHistories as $history) {
+                $existingSeats = collect(json_decode($history->seat, true))
+                    ->pluck('number')
+                    ->toArray();
+
+                $conflicts = array_intersect($requestedSeats, $existingSeats);
+                if (!empty($conflicts)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status'  => 409,
+                        'message' => 'Seat(s) already occupied: ' . implode(',', $conflicts),
+                    ], 409);
+                }
+            }
+
+            // --- ✅ Create payment history ---
+            $payloadArray = $payload->toArray();
+            $payloadArray['daily_route_id'] = $dailyRoute->id;
+            $payloadArray['start_time']     = $payload->get('start_time');
+            $payloadArray['status']         = "SUCCESS";
+            $paymentHistory = PaymentHistory::create($payloadArray);
+
+            DB::commit();
+
+            return response()->json([
+                'status'  => 201,
+                'message' => 'Payment History created successfully',
+                'data'    => $paymentHistory,
+            ], 201);
+        } catch (Exception $e) {
+            Log::error("Store Payment History by Counter Error: " . $e->getMessage());
+            DB::rollBack();
+            // return $this->internalServerError();
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Payment History creating unsuccessful!',
+                'error'    => $e->getMessage(),
+            ], 500);
         }
     }
 }
