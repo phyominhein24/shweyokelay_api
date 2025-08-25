@@ -142,26 +142,19 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
         try {
 
-            // $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
-            // $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
-            //     ->whereDate('start_date', $startDate)
-            //     ->first();
+            $route_id  = $request->input('route_id');
+            $userType  = $request->input('user_type');
+            $totalQty  = $request->input('total');
 
-            // if (!$dailyRoute) {
-            //     $dailyRoute = DailyRoute::create([
-            //         'route_id' => $payload->get('route_id'),
-            //         'start_date' => $startDate
-            //     ]);
-            // }
-            // $payloadArray = $payload->toArray();
-            // $payloadArray['daily_route_id'] = $dailyRoute->id;
-            // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
-            // $paymentHistory = PaymentHistory::create($payloadArray);
-            // // $paymentHistory->status = OrderStatusEnum::SUCCESS;
-            // // $paymentHistory->save();
-            // DB::commit();
+            $route = Routes::findOrFail($route_id);
 
-            $totalAmount = $request->input('total_amount');
+            if ($userType === 'local') {
+                $price = (int) $route->price;
+            } else {
+                $price = (int) $route->fprice;
+            }
+
+            $totalAmount = $price * (int) $totalQty;
             $timestamp = (string) GeneralHelper::getUnixTimestamp();
             $nonceStr = GeneralHelper::generateRandomString();
             $orderStr = GeneralHelper::generateRandomString();
@@ -259,6 +252,10 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
         try {
 
+            $route_id  = $request->input('route_id');
+            $userType  = $request->input('user_type');
+            $totalQty  = $request->input('total');
+
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
                 ->whereDate('start_date', $startDate)
@@ -271,6 +268,19 @@ class PaymentHistoryController extends Controller
                 ]);
             }
             $payloadArray = $payload->toArray();
+
+            $route = Routes::findOrFail($route_id);
+
+            if ($userType === 'local') {
+                $price = (int) $route->price;
+            } else {
+                $price = (int) $route->fprice;
+            }
+
+            $totalAmount = $price * (int) $totalQty;
+
+            $payloadArray['total'] = $totalAmount;
+
             $payloadArray['daily_route_id'] = $dailyRoute->id;
             // $payloadArray['status'] = OrderStatusEnum::SUCCESS;
             $paymentHistory = PaymentHistory::create($payloadArray);
