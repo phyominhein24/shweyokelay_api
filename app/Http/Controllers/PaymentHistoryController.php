@@ -449,7 +449,7 @@ class PaymentHistoryController extends Controller
         $payload = collect($request->validated());
 
         try {
-            $startDate = Carbon::parse($payload->get('start_date'))->toDateString();
+            $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
             $dailyRoute = DailyRoute::where('route_id', $payload->get('route_id'))
                 ->whereDate('start_date', $startDate)
@@ -487,7 +487,7 @@ class PaymentHistoryController extends Controller
             // --- ✅ Create payment history ---
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
-            $payloadArray['start_time']     = $payload->get('start_date');
+            $payloadArray['start_time']     = $payload->get('start_time');
             $payloadArray['status']         = "SUCCESS";
             $paymentHistory = PaymentHistory::create($payloadArray);
 

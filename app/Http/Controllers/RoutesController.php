@@ -74,62 +74,89 @@ class RoutesController extends Controller
 
     public function index_for_web(Request $request)
     {
-
         DB::beginTransaction();
         try {
             $startingPoint = $request->input('starting_point');
-            $endingPoint = $request->input('ending_point');
-            $selectedDate = $request->input('selected_date');
-            $now = Carbon::now()->format('H:i'); // time only
+            $endingPoint   = $request->input('ending_point');
+            $selectedDate  = $request->input('selected_date');
+            $now           = Carbon::now()->format('H:i'); // current time only
 
-            $routess = Routes::query()
+            $parsedDate = $selectedDate ? Carbon::parse($selectedDate) : null;
+
+            // Query base routes
+            $routes = Routes::query()
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
                 ->when($startingPoint, fn($q, $sp) => $q->where('starting_point', $sp))
                 ->when($endingPoint, fn($q, $ep) => $q->where('ending_point', $ep))
-                ->when($selectedDate, function ($q, $selectedDate) {
-                    $parsedDate = Carbon::parse($selectedDate);
+                ->when($parsedDate, function ($q, $parsedDate) {
                     $dayOfWeek = $parsedDate->format('l');
-                    return $q->whereJsonContains('day_off', $dayOfWeek);
+                    $q->whereJsonContains('day_off', $dayOfWeek);
                 })
-                ->whereRaw(
-                    "? NOT BETWEEN strftime('%H:%M', departure, '-' || last_min || ' minutes') AND strftime('%H:%M', departure)",
-                    [$now]
-                )
-                ->with(['vehicles_type'])
+                ->with(['vehicles_type']) // eager load relation
                 ->sortingQuery()
                 ->searchQuery()
                 ->filterQuery()
                 ->filterDateQuery()
                 ->paginationQuery();
-            // ->get();
 
-            $routess->transform(function ($routes) use ($selectedDate) {
-                $routes->orders = PaymentHistory::where('route_id', $routes->id)
-                    ->where('start_time', $selectedDate)
+            // Filter per-route cutoff logic (only for today)
+            $routes = $routes->filter(function ($route) use ($parsedDate, $now) {
+                if ($parsedDate && $parsedDate->isToday()) {
+                    $departure = Carbon::parse($route->departure);
+                    $cutoff    = $departure->copy()->subMinutes($route->last_min);
+
+                    if (Carbon::parse($now)->gt($cutoff)) {
+                        return false; // block expired routes
+                    }
+                }
+                return true;
+            });
+
+            // Preload data to prevent N+1 queries
+            $counterIds = $routes->pluck('starting_point')
+                ->merge($routes->pluck('ending_point'))
+                ->filter()->unique();
+            $counters = Counter::whereIn('id', $counterIds)->pluck('name', 'id');
+
+            $vehicleTypeIds = $routes->pluck('vehicles_type_id')->filter()->unique();
+            $vehicleTypes   = VehiclesType::whereIn('id', $vehicleTypeIds)->pluck('name', 'id');
+
+            $userIds = $routes->pluck('created_by')
+                ->merge($routes->pluck('updated_by'))
+                ->merge($routes->pluck('deleted_by'))
+                ->filter()->unique();
+            $users = User::whereIn('id', $userIds)->pluck('name', 'id');
+
+            // Transform routes
+            $routes->transform(function ($route) use ($selectedDate, $counters, $vehicleTypes, $users) {
+                $route->orders = PaymentHistory::where('route_id', $route->id)
+                    ->when($selectedDate, fn($q) => $q->where('start_time', $selectedDate))
                     ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
                     ->get();
-                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
-                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
-                $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
 
-                $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
-                $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
-                $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
+                $route->starting_point2 = $route->starting_point ? ($counters[$route->starting_point] ?? "Unknown") : "Unknown";
+                $route->ending_point2   = $route->ending_point ? ($counters[$route->ending_point] ?? "Unknown") : "Unknown";
+                $route->vehicles_type_id = $route->vehicles_type_id ? ($vehicleTypes[$route->vehicles_type_id] ?? "Unknown") : "Unknown";
 
-                $departure = Carbon::parse($routes->departure);
-                $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
-                $end   = $departure->format('H:i');
+                $route->created_by = $route->created_by ? ($users[$route->created_by] ?? "Unknown") : "Unknown";
+                $route->updated_by = $route->updated_by ? ($users[$route->updated_by] ?? "Unknown") : "Unknown";
+                $route->deleted_by = $route->deleted_by ? ($users[$route->deleted_by] ?? "Unknown") : "Unknown";
 
-                $routes->between_start = $start;
-                $routes->between_end   = $end;
-                return $routes;
+                $departure = Carbon::parse($route->departure);
+                $start     = $departure->copy()->subMinutes($route->last_min)->format('H:i');
+                $end       = $departure->format('H:i');
+
+                $route->between_start = $start;
+                $route->between_end   = $end;
+
+                return $route;
             });
 
             DB::commit();
 
             return $this->success('Routes retrieved successfully', [
-                'routes' => $routess,
-                'current_time' => $now
+                'routes'        => $routes->values(), // reset indexes
+                'current_time'  => $now
             ]);
         } catch (Exception $e) {
             DB::rollback();
@@ -137,6 +164,7 @@ class RoutesController extends Controller
             return $this->internalServerError();
         }
     }
+
 
     public function store(RoutesStoreRequest $request)
     {
@@ -194,3 +222,69 @@ class RoutesController extends Controller
         }
     }
 }
+
+    // public function index_for_web(Request $request)
+    // {
+
+    //     DB::beginTransaction();
+    //     try {
+    //         $startingPoint = $request->input('starting_point');
+    //         $endingPoint = $request->input('ending_point');
+    //         $selectedDate = $request->input('selected_date');
+    //         $now = Carbon::now()->format('H:i'); // time only
+
+    //         $routess = Routes::query()
+    //             ->where('status', GeneralStatusEnum::ACTIVE->value)
+    //             ->when($startingPoint, fn($q, $sp) => $q->where('starting_point', $sp))
+    //             ->when($endingPoint, fn($q, $ep) => $q->where('ending_point', $ep))
+    //             ->when($selectedDate, function ($q, $selectedDate) {
+    //                 $parsedDate = Carbon::parse($selectedDate);
+    //                 $dayOfWeek = $parsedDate->format('l');
+    //                 return $q->whereJsonContains('day_off', $dayOfWeek);
+    //             })
+    //             ->whereRaw(
+    //                 "? NOT BETWEEN strftime('%H:%M', departure, '-' || last_min || ' minutes') AND strftime('%H:%M', departure)",
+    //                 [$now]
+    //             )
+    //             ->with(['vehicles_type'])
+    //             ->sortingQuery()
+    //             ->searchQuery()
+    //             ->filterQuery()
+    //             ->filterDateQuery()
+    //             ->paginationQuery();
+    //         // ->get();
+
+    //         $routess->transform(function ($routes) use ($selectedDate) {
+    //             $routes->orders = PaymentHistory::where('route_id', $routes->id)
+    //                 ->where('start_time', $selectedDate)
+    //                 ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
+    //                 ->get();
+    //             $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
+    //             $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
+    //             $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
+
+    //             $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
+    //             $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
+    //             $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
+
+    //             $departure = Carbon::parse($routes->departure);
+    //             $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
+    //             $end   = $departure->format('H:i');
+
+    //             $routes->between_start = $start;
+    //             $routes->between_end   = $end;
+    //             return $routes;
+    //         });
+
+    //         DB::commit();
+
+    //         return $this->success('Routes retrieved successfully', [
+    //             'routes' => $routess,
+    //             'current_time' => $now
+    //         ]);
+    //     } catch (Exception $e) {
+    //         DB::rollback();
+    //         Log::error($e);
+    //         return $this->internalServerError();
+    //     }
+    // }
