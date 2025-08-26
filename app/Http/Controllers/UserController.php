@@ -74,7 +74,7 @@ class UserController extends Controller
         // Make the HTTP request to the external API
         $response = Http::withOptions([
             'verify' => false, // Disable SSL verification
-        ])->post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', [
+        ])->post('https://api.kbzpay.com/web/gateway/queryCustInfo', [
             'data' => [
                 "Request" => [
                     "method" => "kbz.payment.queryCustInfo",

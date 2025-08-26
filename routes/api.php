@@ -39,6 +39,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 Route::get('/payments', [PaymentController::class, 'index']);
 Route::get('/counters', [CounterController::class, 'index']);
 Route::get('/route', [RoutesController::class, 'index_for_web']);
+Route::get('/adminRouteSearch', [RoutesController::class, 'adminRouteSearch']);
 Route::get('/vehiclesTypes', [VehiclesTypeController::class, 'index']);
 Route::get('/profiles', [WebAuthController::class, 'userProfile']);
 Route::get('/memberProfile/{id}', [DashboardController::class, 'memberProfile']);
