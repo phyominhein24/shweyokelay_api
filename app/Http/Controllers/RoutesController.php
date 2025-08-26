@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use function PHPUnit\Framework\isEmpty;
+
 class RoutesController extends Controller
 {
     public function index(Request $request)
@@ -148,14 +150,15 @@ class RoutesController extends Controller
 
     public function adminRouteSearch(Request $request)
     {
-
         DB::beginTransaction();
         try {
             $now = Carbon::now(); // full datetime
             $vehicleType  = $request->input('vehicles_type_id');
             $selectedDate = Carbon::parse($request->input('selected_date')); // e.g. 2025-08-24
+            $selectedRouteId = $request->input('selected_route_id');
             $userType  = $request->input('user_type');
-            
+            // dd($selectedRouteId);
+
             // $route = Routes::get();
             // if ($userType === 'local') {
             //     $price = (int) $route->price;
@@ -190,14 +193,16 @@ class RoutesController extends Controller
                 ->filterDateQuery()
                 ->paginationQuery();
 
-          
+            if (isset($selectedRouteId)) {
+                $routes = $routes->where('id', $selectedRouteId);
+            }
 
             $routes->transform(function ($routes) use ($selectedDate) {
                 $routes->orders = PaymentHistory::where('route_id', $routes->id)
                     ->where('start_time', $selectedDate)
                     ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
                     ->get();
-                
+
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
                 $departure = Carbon::parse($routes->departure);
                 $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
@@ -215,7 +220,7 @@ class RoutesController extends Controller
                 'current_time' => $now
             ]);
         } catch (Exception $e) {
-           dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 
