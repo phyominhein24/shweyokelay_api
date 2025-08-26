@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use function PHPUnit\Framework\isEmpty;
+
 class RoutesController extends Controller
 {
     public function index(Request $request)
@@ -148,23 +150,21 @@ class RoutesController extends Controller
 
     public function adminRouteSearch(Request $request)
     {
-
         DB::beginTransaction();
         try {
             $now = Carbon::now(); // full datetime
             $vehicleType  = $request->input('vehicles_type_id');
             $selectedDate = Carbon::parse($request->input('selected_date')); // e.g. 2025-08-24
+            $selectedRouteId = $request->input('selected_route_id');
             $userType  = $request->input('user_type');
-            
-            // $route = Routes::get();
-            // if ($userType === 'local') {
-            //     $price = (int) $route->price;
-            // } else {
-            //     $price = (int) $route->fprice;
-            // }
-            // dd($route);
+            // dd($selectedRouteId);
 
-            $routes = Routes::query()
+            // $route = Routes::findOrFail($selectedRouteId);
+            // // dd($route);
+
+
+
+            $routess = Routes::query()
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
                 ->where('vehicles_type_id', $vehicleType)
                 ->when($selectedDate, function ($q, $selectedDate) {
@@ -190,15 +190,29 @@ class RoutesController extends Controller
                 ->filterDateQuery()
                 ->paginationQuery();
 
-          
+            // if ($userType === 'local') {
+            //     $price = (int) $routes->price;
+            // } else {
+            //     $price = (int) $routes->fprice;
+            // }
 
-            $routes->transform(function ($routes) use ($selectedDate) {
+            if (isset($selectedRouteId)) {
+                $routes = $routess->where('id', $selectedRouteId);
+            }
+
+            $routess->transform(function ($routes) use ($selectedDate) {
                 $routes->orders = PaymentHistory::where('route_id', $routes->id)
                     ->where('start_time', $selectedDate)
                     ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
                     ->get();
-                
+                $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
+                $routes->ending_point2 = $routes->ending_point ? Counter::find($routes->ending_point)->name : "Unknown";
                 $routes->vehicles_type_id = $routes->vehicles_type_id ? VehiclesType::find($routes->vehicles_type_id)->name : "Unknown";
+
+                $routes->created_by = $routes->created_by ? User::find($routes->created_by)->name : "Unknown";
+                $routes->updated_by = $routes->updated_by ? User::find($routes->updated_by)->name : "Unknown";
+                $routes->deleted_by = $routes->deleted_by ? User::find($routes->deleted_by)->name : "Unknown";
+
                 $departure = Carbon::parse($routes->departure);
                 $start = $departure->copy()->subMinutes($routes->last_min)->format('H:i');
                 $end   = $departure->format('H:i');
@@ -212,10 +226,11 @@ class RoutesController extends Controller
 
             return $this->success('Routes retrieved successfully', [
                 'routes' => $routes,
+                // 'global_price' => $price,
                 'current_time' => $now
             ]);
         } catch (Exception $e) {
-           dd($e->getMessage());
+            dd($e->getMessage());
         }
     }
 

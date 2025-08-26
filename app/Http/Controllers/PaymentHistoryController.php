@@ -374,7 +374,7 @@ class PaymentHistoryController extends Controller
         ];
 
         // $response = Http::post('https://api.kbzpay.com:18443/web/gateway/uat/queryCustInfo', $orderInfo);
-        $response = Http::post('https://api.kbzpay.com:18443/web/gateway/queryCustInfo', $orderInfo); // for production
+        $response = Http::post('https://api.kbzpay.com/web/gateway/queryCustInfo', $orderInfo); // for production
         $responseData = $response->json();
         $openID = $responseData['Response']['customer_info']['openID'] ?? null;
 
@@ -457,7 +457,6 @@ class PaymentHistoryController extends Controller
     {
         DB::beginTransaction();
         $payload = collect($request->validated());
-
         try {
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
@@ -478,6 +477,7 @@ class PaymentHistoryController extends Controller
                 ->toArray();
 
             $existingHistories = PaymentHistory::where('daily_route_id', $dailyRoute->id)->get();
+            // dd($existingHistories->toArray());
 
             foreach ($existingHistories as $history) {
                 $existingSeats = collect(json_decode($history->seat, true))
