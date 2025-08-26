@@ -457,7 +457,6 @@ class PaymentHistoryController extends Controller
     {
         DB::beginTransaction();
         $payload = collect($request->validated());
-
         try {
             $startDate = Carbon::parse($payload->get('start_time'))->toDateString();
 
@@ -478,6 +477,7 @@ class PaymentHistoryController extends Controller
                 ->toArray();
 
             $existingHistories = PaymentHistory::where('daily_route_id', $dailyRoute->id)->get();
+            // dd($existingHistories->toArray());
 
             foreach ($existingHistories as $history) {
                 $existingSeats = collect(json_decode($history->seat, true))
