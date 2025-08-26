@@ -162,8 +162,6 @@ class RoutesController extends Controller
             // $route = Routes::findOrFail($selectedRouteId);
             // // dd($route);
 
-
-
             $routess = Routes::query()
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
                 ->where('vehicles_type_id', $vehicleType)
@@ -225,12 +223,15 @@ class RoutesController extends Controller
             DB::commit();
 
             return $this->success('Routes retrieved successfully', [
-                'routes' => $routes,
+                'routes' => $routess,
                 // 'global_price' => $price,
                 'current_time' => $now
             ]);
-        } catch (Exception $e) {
-            dd($e->getMessage());
+        } 
+            catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return $this->internalServerError();
         }
     }
 

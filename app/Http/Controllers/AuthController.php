@@ -49,7 +49,7 @@ class AuthController extends Controller
  
         // $permissions = $user->getAllPermissions()->pluck('name');
         
-         $role = $user->roles()->with('permissions')->first();
+        $role = $user->roles()->with('permissions')->first();
         
         DB::commit();       
        
@@ -128,8 +128,14 @@ class AuthController extends Controller
     {
         $user = auth()->guard('member')->user();
 
+        // if (!$user) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
+
         DB::beginTransaction();
-        $role = Role::with(['permissions'])->findOrFail($user->id);
+
+        $role = $user->roles()->with('permissions')->first();
+
         DB::commit();  
         
         $responseData = [
@@ -140,8 +146,8 @@ class AuthController extends Controller
                 'phone' => $user->phone,                
                 'status' => $user->status,                            
             ],
-            'role' => $role->name,
-            'permissions' => $role->permissions
+            'role' => $role ? $role->name : null,
+            'permissions' => $role ? $role->permissions : [],
         ];
         return $this->success('user profile retrived successfully', $responseData);
     }
