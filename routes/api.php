@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+// Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+// Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
 Route::post('/forget-password', [PasswordResetController::class, 'forgetPassword'])->middleware('guest');
 Route::get('/reset-password', [PasswordResetController::class, 'resetPasswordPage'])->middleware('guest');
