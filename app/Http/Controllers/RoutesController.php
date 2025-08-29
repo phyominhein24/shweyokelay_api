@@ -84,6 +84,7 @@ class RoutesController extends Controller
             $endingPoint = $request->input('ending_point');
             $now = Carbon::now(); // full datetime
             $selectedDate = Carbon::parse($request->input('selected_date')); // e.g. 2025-08-24
+            $selectedDate2 = $request->input('selected_date');
 
             $routess = Routes::query()
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
@@ -113,9 +114,9 @@ class RoutesController extends Controller
                 ->paginationQuery();
             // ->get();
 
-            $routess->transform(function ($routes) use ($selectedDate) {
+            $routess->transform(function ($routes) use ($selectedDate2) {
                 $routes->orders = PaymentHistory::where('route_id', $routes->id)
-                    ->where('start_time', $selectedDate)
+                    ->where('start_time', $selectedDate2)
                     ->whereIn('status', [OrderStatusEnum::PENDING, OrderStatusEnum::SUCCESS])
                     ->get();
                 $routes->starting_point2 = $routes->starting_point ? Counter::find($routes->starting_point)->name : "Unknown";
@@ -162,10 +163,8 @@ class RoutesController extends Controller
 
             // $route = Routes::findOrFail($selectedRouteId);
             // // dd($route);
-
-
-
             $routes = Routes::query()
+
                 ->where('status', GeneralStatusEnum::ACTIVE->value)
                 ->when($startingPoint, function ($query, $startingPoint) {
                     return $query->where('starting_point', $startingPoint);
@@ -229,12 +228,15 @@ class RoutesController extends Controller
             DB::commit();
 
             return $this->success('Routes retrieved successfully', [
-                'routes' => $routes,
+                'routes' => $routess,
                 // 'global_price' => $price,
                 'current_time' => $now
             ]);
-        } catch (Exception $e) {
-            dd($e->getMessage());
+        } 
+            catch (Exception $e) {
+                DB::rollback();
+                Log::error($e);
+                return $this->internalServerError();
         }
     }
 

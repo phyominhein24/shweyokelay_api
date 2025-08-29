@@ -471,13 +471,11 @@ class PaymentHistoryController extends Controller
                 ]);
             }
 
-            // --- ✅ Seat check ---
             $requestedSeats = collect(json_decode($payload->get('seat'), true))
                 ->pluck('number')
                 ->toArray();
 
             $existingHistories = PaymentHistory::where('daily_route_id', $dailyRoute->id)->get();
-            // dd($existingHistories->toArray());
 
             foreach ($existingHistories as $history) {
                 $existingSeats = collect(json_decode($history->seat, true))
@@ -494,11 +492,10 @@ class PaymentHistoryController extends Controller
                 }
             }
 
-            // --- ✅ Create payment history ---
             $payloadArray = $payload->toArray();
             $payloadArray['daily_route_id'] = $dailyRoute->id;
             $payloadArray['start_time']     = $payload->get('start_time');
-            $payloadArray['status']         = "SUCCESS";
+            // $payloadArray['status']         = "SUCCESS";
             $paymentHistory = PaymentHistory::create($payloadArray);
 
             DB::commit();

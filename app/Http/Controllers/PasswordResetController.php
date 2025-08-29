@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PasswordReset;
 use App\Models\User;
+use App\Models\Member;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,8 +18,8 @@ class PasswordResetController extends Controller
     {
         try {
 
-            $user = User::where('email', $request->email)->get();
-
+            $user = Member::where('email', $request->email)->get();
+  
             if (count($user) > 0) {
 
                 $token = Str::random(40);

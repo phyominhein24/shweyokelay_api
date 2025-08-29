@@ -45,8 +45,12 @@ class AuthController extends Controller
             return response()->json(['message' => 'Account is not ACTIVE'], 400);
         }
 
-        DB::beginTransaction();
-        $role = Role::with(['permissions'])->findOrFail($user->id);
+        // $roles = $user->getRoleNames();
+ 
+        // $permissions = $user->getAllPermissions()->pluck('name');
+        
+        $role = $user->roles()->with('permissions')->first();
+        
         DB::commit();       
        
         $responseData = [
@@ -58,8 +62,8 @@ class AuthController extends Controller
                 'phone' => $user->phone,                
                 'status' => $user->status,                            
             ],
-            'role' => $role->name,
-            'permissions' => $role->permissions
+            'role' => $role ? $role->name : null,
+            'permissions' => $role ? $role->permissions : [],
         ];
 
         return $this->success('Login Successfully', $responseData);
@@ -124,8 +128,14 @@ class AuthController extends Controller
     {
         $user = auth()->guard('member')->user();
 
+        // if (!$user) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
+
         DB::beginTransaction();
-        $role = Role::with(['permissions'])->findOrFail($user->id);
+
+        $role = $user->roles()->with('permissions')->first();
+
         DB::commit();  
         
         $responseData = [
@@ -136,8 +146,8 @@ class AuthController extends Controller
                 'phone' => $user->phone,                
                 'status' => $user->status,                            
             ],
-            'role' => $role->name,
-            'permissions' => $role->permissions
+            'role' => $role ? $role->name : null,
+            'permissions' => $role ? $role->permissions : [],
         ];
         return $this->success('user profile retrived successfully', $responseData);
     }
@@ -147,9 +157,9 @@ class AuthController extends Controller
         $payload = collect($request->validated());
         $payload['password'] = bcrypt($payload['password']);
         $authId = auth()->user()->id;
-        if ($authId != $id) {
-            return $this->unauthenticated('you do not have permission to change password');
-        }
+        // if ($authId != $id) {
+        //     return $this->unauthenticated('you do not have permission to change password');
+        // }
 
         DB::beginTransaction();
 
